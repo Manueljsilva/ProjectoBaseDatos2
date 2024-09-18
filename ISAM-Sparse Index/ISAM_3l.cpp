@@ -2,23 +2,21 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+/*preugnta al profe, cada index debe tener la misma size?*/
+
 
 using namespace std;
 
-const int Page_size = 10 ; //es el numero de llaves que puede tener una pagina //127
+//const int IndexSize2 = 2 ;
+//const int IndexSize3 = 4 ;
+const int Page_size = 2 ; //es el numero de llaves que puede tener una pagina //127
 const int Data_size = 3; //es el numero de registros que puede tener una pagina de datos // 31
+
 struct Registro {
     int codigo;
     char nombre[12];
     char apellidos[12];
     int ciclo;
-
-    void setData(ifstream &file){
-        file >> codigo; file.get();
-        file.getline(nombre, 12, ',');
-        file.getline(apellidos, 12, ',');
-        file >> ciclo; file.get();
-    }
 };
 struct PageIndex{
     int keys[Page_size];
@@ -28,14 +26,12 @@ struct PageIndex{
     PageIndex(){
         this->count = 0;
     }
+    PageIndex(int Page_size){
+        this->keys[Page_size];
+        this->count = 0;
+    }
+
 };
-// m * peso de las llavves , digamos que es 4
-//m*4 + (m+1)*4 + 4 = 1024 // esto es el tamaño de la pagina 
-// tallando el tamaño de la pagina
-//  PageData=(tamano de Registro × Data_size)+4(count)+4(nextPage)
-//  calculando el tamaño de la página de     datos
-//  tamaño de registro = 4+12+12+4 = 32 bytes
-//  32*data_size + 4 + 4 = 1024 ; data_size = 31
 struct PageData{
     Registro records[Data_size]; 
     int count;                  
@@ -47,41 +43,40 @@ struct PageData{
     }
 };
 
-void operator >> (ifstream &file, PageData &data){
-    file.read((char*)&data, sizeof(PageData));
-}
-
-void operator << (ofstream &file, PageData &data){
-    file.write((char*)&data, sizeof(PageData));
-}
-
 template <typename T>
 class ISAMFile{
     string data_file;
-    string index_file;
+    string index1_file;
+    string index2_file;
+    string index3_file;
     public:
-    void createIndex(fstream &i_file){
-        PageIndex index;
-        ValueKeys(index);
-        i_file.write((char*)&index, sizeof(PageIndex));
-        i_file.seekg(0, ios::end);
-    }
-
-    ISAMFile(string data_file, string index_file){
+    ISAMFile(string data_file, string index1_file , string index2_file, string index3_file){
         this->data_file = data_file;
-        this->index_file = index_file;
+        this->index1_file = index1_file;
+        this->index2_file = index2_file;
+        this->index3_file = index3_file;
+
         // si el indice no existe, se crea uno nuevo
-        if(!Exist_index(index_file)){
-            fstream i_file(index_file, ios::binary | ios::out);
-            if(!i_file.is_open()){
-                cout << "Error al crear el archivo de indices" << endl;
+        if(!Exist_index(i_file)){
+            fstream i_file(index1_file, ios::binary | ios::in);
+            fstream i_file2(index2_file, ios::binary | ios::in);
+            fstream i_file3(index3_file, ios::binary | ios::in);
+            fstream d_file(data_file, ios::binary | ios::in);
+            if(!i_file.is_open() && !i_file2.is_open() && !i_file3.is_open() && !d_file.is_open()){
+                cout << "Error al abrir los archivos" << endl;
                 return;
             }
-            createIndex(i_file);
+            CreateIndex1(i_file);
+            CreateIndex2(i_file , i_file2);
+            CreateIndex3(i_file2 , i_file3);
             //cout << "i_file.tellg(): " << i_file.tellg() << endl;
             //cout << "sizeof(PageIndex): " << sizeof(PageIndex) << endl;
             i_file.close();
+            i_file2.close();
+            i_file3.close();
+
         } else {cout << "El archivo de indices ya existe" << endl;}
+
         // si el archivo de datos no existe, se crea uno nuevo
         if(!Exist_data(data_file)){
             fstream d_file(data_file, ios::binary | ios::out);
@@ -94,14 +89,68 @@ class ISAMFile{
                 d_file.write((char*)&data, sizeof(PageData));
             }
             d_file.seekg(0, ios::end);
-            //cout << "i_file.tellg(): " << d_file.tellg() << endl;
-            //cout << "sizeof(PageIndex): " << sizeof(PageData) << endl;
             d_file.close();
         } else {cout << "El archivo de datos ya existe" << endl;}
-        
-
 
     }
+    void CreateIndex1(fstream &i_file){
+        PageIndex index;
+        index.keys[0] = 1000 ; 
+        index.pages[1] = 2000;
+        i_file.write((char*)&index, sizeof(PageIndex));
+        i_file.seekg(0, ios::end);
+    }
+
+    void CreateIndex2(fstream &i_file , fstream &i_file2){
+        PageIndex index;
+        PageIndex index2;
+        index.seekg(0, ios::beg);
+        index.read((char*)&index, sizeof(PageIndex));
+        int div = index.keys[0]/Page_size;
+        for(int i = 0; i < Page_size ; i++){
+            for(int j = 0; j < Page_size; j++){
+                index.keys[j] = div;
+                div = div + div;  
+            }
+            i_file2.write((char*)&index2, sizeof(PageIndex));
+        }
+        i_file2.seekg(0, ios::end);
+    }
+
+    void CreateIndex3(fstream &i_file2, fstream &i_file3) {
+        PageIndex index2;  // Estructura para leer el nivel 2
+        PageIndex index3;  // Estructura para escribir en el nivel 3
+        
+        int currentPage = 0; // Contador de páginas para el nivel 3
+        i_file2.seekg(0, ios::beg);  // Posicionarse al principio del archivo de índice 2
+        
+        while (i_file2.read((char*)&index2, sizeof(PageIndex))) {
+            // Vamos a generar claves para el nivel 3 a partir de las claves del nivel 2
+            for (int i = 0; i < index2.count; i++) {
+                // Generar las claves del nivel 3 basadas en las claves del nivel 2
+                index3.keys[i % Page_size] = index2.keys[i];
+                index3.pages[i % Page_size] = currentPage;
+
+                // Si hemos llenado una página de nivel 3, la escribimos en el archivo
+                if ((i + 1) % Page_size == 0) {
+                    index3.count = Page_size;
+                    i_file3.write((char*)&index3, sizeof(PageIndex));
+                    currentPage++; // Incrementar el contador de páginas
+                }
+            }
+
+            // Si quedan claves que no llenan una página completa, escribirlas
+            if (index2.count % Page_size != 0) {
+                index3.count = index2.count % Page_size;
+                i_file3.write((char*)&index3, sizeof(PageIndex));
+                currentPage++;
+            }
+        }
+
+        // Mover el cursor del archivo de índice 3 al final
+        i_file3.seekg(0, ios::end);
+    }
+
 
     bool Exist_index(string index_file) {
         fstream i_file(index_file, ios::binary | ios::in);
@@ -123,13 +172,13 @@ class ISAMFile{
     void ValueKeys(PageIndex &index){
 
         for (int i = 0; i < Page_size; i++) {
-            index.keys[i] = (i + 1) * 10; // Llaves inicializadas con un valor arbitrario
+            index.keys[i] = (i + 1) * 5; // Llaves inicializadas con un valor arbitrario
             index.pages[i] = i;           // Páginas apuntando a su respectiva posición
         }
         index.pages[Page_size] = Page_size; // Última página
         index.count = Page_size;            // Número de llaves en el índice
     }
-    bool Exist_data(string data_file){
+    bool Exist_data(fstream &d_file){
         fstream d_file(data_file, ios::binary | ios::in);
         if(!d_file.is_open()){
             cout << "El archivo de datos no abre" << endl;
@@ -474,8 +523,8 @@ void testrangeSearch(ISAMFile<int> &isam){
 }
 
 int main(){
-    ISAMFile<int> isam("data.dat", "indice1.dat");
-    test1(isam);
+    ISAMFile<int> isam("data.dat", "indice1.dat" , "indice2.dat", "indice3.dat");
+    //test1(isam);
 
     isam.print();
     //probando el search
@@ -485,3 +534,21 @@ int main(){
 
     return 0 ;     
 }
+
+
+/*
+// Todo esto depende de la cantidad de registros que se tengan en el archivo de datos (falta encontrar un .csv con mas registros)
+    //suponiendo que se tienen 10 000 registros
+ideas para 3 niveles:
+    -Tamaño de página: 8192 bytes.
+    -Page_size: 1023 (claves por página de índice).
+    -Data_size: 15 (registros por página de datos).
+Paginas: 
+    - 15 registros por página de datos.
+Nivel3: 
+    - PageIndex: 1023 claves, 1024 páginas.
+nivel2:
+    - PageIndex: 31 claves, 32 páginas.
+nivel1:
+    - PageIndex: 31 claves, 32 páginas.
+*/

@@ -1,27 +1,27 @@
-#define BUF_size 1024
+#define BUF_size 8192
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
 
 using namespace std;
 
-const int Page_size = 10 ; //es el numero de llaves que puede tener una pagina //127
+const int Page_size = 5 ; //es el numero de llaves que puede tener una pagina // 1023
 const int Data_size = 3; //es el numero de registros que puede tener una pagina de datos // 31
 struct Registro {
-    int codigo;
-    char nombre[12];
-    char apellidos[12];
-    int ciclo;
-
-    void setData(ifstream &file){
-        file >> codigo; file.get();
-        file.getline(nombre, 12, ',');
-        file.getline(apellidos, 12, ',');
-        file >> ciclo; file.get();
-    }
+    char Tittle[30];        
+    char ReleaseYear[12];
+    char Runtime[7];
+    char Genre[25];
+    char Rating[5];
+    char Cast[75];
+    char Synopsis[200];
+    // el total de bits es 354
 };
 struct PageIndex{
-    int keys[Page_size];
+    int keys[Page_size]; // Arreglo para las claves
     int pages[Page_size+1]; //posicion de la pagina 
     int count ;
     //constructor
@@ -29,9 +29,10 @@ struct PageIndex{
         this->count = 0;
     }
 };
-// m * peso de las llavves , digamos que es 4
-//m*4 + (m+1)*4 + 4 = 1024 // esto es el tamaño de la pagina 
-// tallando el tamaño de la pagina
+// Page_size * peso de las llavves , digamos que es 4
+// Page_size*4 + (Page_size+1)*4 + 4 = 8192 // esto es el tamaño de la pagina
+// page_size = 1023 
+// hallando el tamaño de la pagina
 //  PageData=(tamano de Registro × Data_size)+4(count)+4(nextPage)
 //  calculando el tamaño de la página de     datos
 //  tamaño de registro = 4+12+12+4 = 32 bytes
@@ -47,13 +48,6 @@ struct PageData{
     }
 };
 
-void operator >> (ifstream &file, PageData &data){
-    file.read((char*)&data, sizeof(PageData));
-}
-
-void operator << (ofstream &file, PageData &data){
-    file.write((char*)&data, sizeof(PageData));
-}
 
 template <typename T>
 class ISAMFile{
@@ -119,11 +113,9 @@ class ISAMFile{
         i_file.close();
         return true;
     }
-
-    void ValueKeys(PageIndex &index){
-
+    void ValueKeys(PageIndex &index) {
         for (int i = 0; i < Page_size; i++) {
-            index.keys[i] = (i + 1) * 10; // Llaves inicializadas con un valor arbitrario
+            index.keys[i] = (i + 1) * 1000; // Llaves inicializadas con un valor arbitrario
             index.pages[i] = i;           // Páginas apuntando a su respectiva posición
         }
         index.pages[Page_size] = Page_size; // Última página
@@ -144,7 +136,53 @@ class ISAMFile{
         d_file.close();
         return true;
     }
+    string procesarTitulo(string titulo){
+        //convertimos el titulo a minisculas para poder comparar
+        transform(titulo.begin(), titulo.end(), titulo.begin(), ::tolower);
+        //si el titulo comienza con the, a , an, eliminamos estas palabras
+        if(titulo.find("the ") == 0){
+            titulo = titulo.substr(4);
+        } else if(titulo.find("a ") == 0){
+            titulo = titulo.substr(2);
+        } else if(titulo.find("an ") == 0){
+            titulo = titulo.substr(3);
+        }
+        return titulo;
 
+    }
+    int FirstLetterToKey(char firstLetter) {
+        // Normalización de mayúsculas a minúsculas.
+        firstLetter = tolower(firstLetter);
+        
+        if (firstLetter >= 'a' && firstLetter <= 'e') {
+            return 1000;
+        } else if (firstLetter >= 'f' && firstLetter <= 'j') {
+            return 2000;
+        } else if (firstLetter >= 'k' && firstLetter <= 'o') {
+            return 3000;
+        } else if (firstLetter >= 'p' && firstLetter <= 't') {
+            return 4000;
+        } else if (firstLetter >= 'u' && firstLetter <= 'z') {
+            return 5000;
+        } else {
+            return -1; // En caso de un carácter no soportado.
+        }
+    }
+    int SearchKey(const PageIndex &index, const string &key) {
+        // Procesar la clave para eliminar palabras comunes.
+        string newKey = procesarTitulo(key);
+        // Obtener la primera letra de la clave.
+        char firstLetter = newKey[0];
+        // Convertir la primera letra en una clave numérica.
+        int keyNumber = FirstLetterToKey(firstLetter);
+        // Buscar la clave en el índice.
+        for (int i = 0; i < index.count; i++) {
+            if (keyNumber <= index.keys[i]) {
+                return i;
+            }
+        }
+        return index.count;
+    }
 
     bool add(Registro registro){
         // paso 0 : abrir el archivo indice 
@@ -159,7 +197,8 @@ class ISAMFile{
         i_file.read((char*)&index, sizeof(PageIndex));
         i_file.close();
         // paso 2 : buscar la pagina donde se encuentra la llave
-        int pageIndex = search_key(index, registro.codigo); // buscar la pagina donde se encuentra la llave
+        //string newTitle = procesarTitulo(registro.Tittle);
+        int pageIndex = SearchKey(index , registro.Tittle); // buscar la pagina donde se encuentra la llave
         // paso 3 : abrir el archivo de datos
         fstream d_file(data_file, ios::binary | ios::in | ios::out);
         if(!d_file.is_open()){
@@ -214,15 +253,7 @@ class ISAMFile{
         return false;
 
     }
-    // analizarlo mejor 
-    int search_key(PageIndex index, T key){
-        for(int i = 0; i < index.count; i++){
-            if(key < index.keys[i]){
-                return i;
-            }
-        }
-        return index.count - 1;
-    }
+
 
     //La busqueda espesiifica puede retornar mas de un elemento que coincida con la key 
     Registro search(T key){
@@ -258,9 +289,9 @@ class ISAMFile{
         // 6. Buscar el registro en la página
         while (true) {
             for (int i = 0; i < data.count; i++) {
-                if (data.records[i].codigo == key) {
+                if (data.records[i].Tittle == key) {
                     d_file.close();
-                    cout << "Se encontro el registro: " << data.records[i].codigo << " " << data.records[i].nombre << " " << data.records[i].apellidos << " " << data.records[i].ciclo << endl;
+                    //cout << "Se encontro el registro: " << data.records[i].codigo << " " << data.records[i].nombre << " " << data.records[i].apellidos << " " << data.records[i].ciclo << endl;
                     return data.records[i];
                 }
             }
@@ -310,7 +341,7 @@ class ISAMFile{
         // 6. Buscar el registro en la página
         while (true) {
             for (int i = 0; i < data.count; i++) {
-                if (data.records[i].codigo >= begin && data.records[i].codigo <= end) {
+                if (data.records[i].Tittle >= begin && data.records[i].Tittle <= end) {
                     result.push_back(data.records[i]);
                 }
             }
@@ -355,7 +386,7 @@ class ISAMFile{
         // paso 5 : buscar el registro a eliminar
         while(true){
             for(int i = 0; i < data.count; i++){
-                if(data.records[i].codigo == key){
+                if(data.records[i].Tittle == key){
                     // reemplazar el registro a eliminar con el ultimo registro
                     data.records[i] = data.records[data.count-1];
                     data.count--; // disminuir el tamaño de la pagina de datos
@@ -405,10 +436,10 @@ class ISAMFile{
         for (int i = 0; i < index.count; i++) {
             d_file.seekg(index.pages[i] * sizeof(PageData), ios::beg);
             d_file.read((char*)&data, sizeof(PageData));
-            cout << "--------------Pagina ---------------" << index.pages[i] << endl;
+            cout << "--------------Pagina ---------------" << index.pages[i] << "key: " << index.keys[i] << endl;
             cout << "Count: " << data.count << endl;
             for (int j = 0; j < data.count; j++) {
-                cout << "Registro " << j << ": " << data.records[j].codigo << " " << data.records[j].nombre << " " << data.records[j].apellidos << " " << data.records[j].ciclo << endl;
+                cout << "Registro " << j << ": " << data.records[j].Tittle <<endl;
             }
             cout << "-------Siguiente pagina: " << data.nextPage << endl;
             //impresion de las paginas enlazadas
@@ -419,7 +450,7 @@ class ISAMFile{
                 cout << "--------------sub Pagina ---------------" << pos << endl;
                 cout << "Count: " << data.count << endl;
                 for (int j = 0; j < data.count; j++) {
-                    cout << "Registro " << j << ": " << data.records[j].codigo << " " << data.records[j].nombre << " " << data.records[j].apellidos << " " << data.records[j].ciclo << endl;
+                    cout << "Registro " << j << ": " << data.records[j].Tittle << endl;
                 }
                 cout << "-------Siguiente sub pagina: " << data.nextPage << endl;
             }
@@ -428,33 +459,42 @@ class ISAMFile{
 
         d_file.close();
     }
+    void print2(){
+        ifstream i_file(index_file, ios::binary | ios::in);
+        if (!i_file.is_open()) {
+            cout << "Error al abrir el archivo de indices" << endl;
+            return;
+        }
+
+        // 2. Leer la estructura de la página de índices
+        PageIndex index;
+        i_file.seekg(0, ios::beg);
+        i_file.read((char*)&index, sizeof(PageIndex));
+        i_file.close();
+        // Imprimir resultados
+        for (int i = 0; i < index.count; i++) {
+            std::cout << "Key: " << index.keys[i] << ", Page: " << index.pages[i] << std::endl;
+        }
+        std::cout << "Last Page: " << index.pages[index.count] << std::endl;
+    }
 
 
 };
 
 
-
-
 void test1(ISAMFile <int> &isam){
         Registro reg[4] = {
-        {5, "Juan", "Perez", 1},
-        {6, "Juan", "Perez", 1},
-        {7, "Maria", "Lopez", 2},
-        {8, "Pedro", "Garcia", 3}
+        {"Mednesday", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
+        {"The Mandalorian", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic."},
+        {"Melicual1", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
+        {"Melicual2", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic."},
+            
     };
-    Registro reg2[4] = {
-        {11 , "matias", "perez", 1},
-        {12 , "manuel", "cassa", 2},
-        {13 , "jose", "dsada", 1},
-        {14 , "carlos", "werty", 5}
+    Registro reg2[4] = {// mas registro , no repitas registros
+        {"The Witwwqacher", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
+        {"The dsad", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic"},
     };
-    Registro regis = {9, "pepe", "elmago", 1};
-    Registro regi3[4] = {
-        {21 , "hjkl", "perez", 1},
-        {22 , "cvb", "cassa", 2},
-        {23 , "fds", "dfghj", 1},
-        {24 , "fdsa", "asdfgh", 5}
-    };
+    Registro regis = {"Star Wars: The Clone Wars", "2008–2020", "23 min", "AdventFi", "8.2", "Tom Kane, Matt Lanter, Dee Bradley Baker, James Arnold Taylor", "Jedi Knights lead the Grand Army of the Republic against the droid army of the Separatists."};
 
     for(int i = 0; i < 4; i++){
         isam.add(reg[i]);
@@ -467,21 +507,25 @@ void test1(ISAMFile <int> &isam){
 }
 
 void testrangeSearch(ISAMFile<int> &isam){
-    vector<Registro> registros = isam.rangeSearch(5, 8);
-    for(Registro reg : registros){
-        cout << reg.codigo << " " << reg.nombre << " " << reg.apellidos << " " << reg.ciclo << endl;
-    }
+    //vector<Registro> registros = isam.rangeSearch("Melicual1", "Melicual2");
+    //for(Registro reg : registros){
+    //    cout <<reg.Tittle << endl;
+    //}
 }
+
+
 
 int main(){
     ISAMFile<int> isam("data.dat", "indice1.dat");
     test1(isam);
-
+    //ingresando un valor
+    Registro regis = {"The Witcher", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."};
+    isam.add(regis);
     isam.print();
     //probando el search
-    isam.search(9);
+    //isam.search(9);
     //probando el rangeSearch
-    testrangeSearch(isam);
+    //testrangeSearch(isam);
 
     return 0 ;     
 }
