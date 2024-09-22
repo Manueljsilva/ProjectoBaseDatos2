@@ -29,14 +29,7 @@ struct PageIndex{
         this->count = 0;
     }
 };
-// Page_size * peso de las llavves , digamos que es 4
-// Page_size*4 + (Page_size+1)*4 + 4 = 8192 // esto es el tamaño de la pagina
-// page_size = 1023 
-// hallando el tamaño de la pagina
-//  PageData=(tamano de Registro × Data_size)+4(count)+4(nextPage)
-//  calculando el tamaño de la página de     datos
-//  tamaño de registro = 4+12+12+4 = 32 bytes
-//  32*data_size + 4 + 4 = 1024 ; data_size = 31
+
 struct PageData{
     Registro records[Data_size]; 
     int count;                  
@@ -484,7 +477,7 @@ class ISAMFile{
 
 void test1(ISAMFile <int> &isam){
         Registro reg[4] = {
-        {"Mednesday", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
+        {"the ednesday", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
         {"The Mandalorian", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic."},
         {"Melicual1", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
         {"Melicual2", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic."},
