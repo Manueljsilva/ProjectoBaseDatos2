@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int Page_size = 5 ; //es el numero de llaves que puede tener una pagina // 1023
+const int Page_size = 8 ; //es el numero de llaves que puede tener una pagina // 1023
 const int Data_size = 3; //es el numero de registros que puede tener una pagina de datos // 31
 struct Registro {
     char Tittle[30];        
@@ -108,7 +108,7 @@ class ISAMFile{
     }
     void ValueKeys(PageIndex &index) {
         for (int i = 0; i < Page_size; i++) {
-            index.keys[i] = (i + 1) * 1000; // Llaves inicializadas con un valor arbitrario
+            index.keys[i] = (i + 1) * 250; // Llaves inicializadas con un valor arbitrario
             index.pages[i] = i;           // Páginas apuntando a su respectiva posición
         }
         index.pages[Page_size] = Page_size; // Última página
@@ -146,19 +146,25 @@ class ISAMFile{
     int FirstLetterToKey(char firstLetter) {
         // Normalización de mayúsculas a minúsculas.
         firstLetter = tolower(firstLetter);
-        
-        if (firstLetter >= 'a' && firstLetter <= 'e') {
+        // Convertir la primera letra en una clave numérica.
+        if (firstLetter >= 'a' && firstLetter <= 'c') {
+            return 250;
+        } else if (firstLetter >= 'd' && firstLetter <= 'f') {
+            return 500;
+        } else if (firstLetter >= 'g' && firstLetter <= 'i') {
+            return 750;
+        } else if (firstLetter >= 'j' && firstLetter <= 'l') {
             return 1000;
-        } else if (firstLetter >= 'f' && firstLetter <= 'j') {
+        } else if (firstLetter >= 'm' && firstLetter <= 'o') {
+            return 1250;
+        } else if (firstLetter >= 'p' && firstLetter <= 'r') {
+            return 1500;
+        } else if (firstLetter >= 's' && firstLetter <= 'u') {
+            return 1750;
+        } else if (firstLetter >= 'v' && firstLetter <= 'z') {
             return 2000;
-        } else if (firstLetter >= 'k' && firstLetter <= 'o') {
-            return 3000;
-        } else if (firstLetter >= 'p' && firstLetter <= 't') {
-            return 4000;
-        } else if (firstLetter >= 'u' && firstLetter <= 'z') {
-            return 5000;
         } else {
-            return -1; // En caso de un carácter no soportado.
+            return 0;
         }
     }
     int SearchKey(const PageIndex &index, const string &key) {
@@ -190,8 +196,7 @@ class ISAMFile{
         i_file.read((char*)&index, sizeof(PageIndex));
         i_file.close();
         // paso 2 : buscar la pagina donde se encuentra la llave
-        //string newTitle = procesarTitulo(registro.Tittle);
-        int pageIndex = SearchKey(index , registro.Tittle); // buscar la pagina donde se encuentra la llave
+        int pageIndex = SearchKey(index , registro.Tittle); 
         // paso 3 : abrir el archivo de datos
         fstream d_file(data_file, ios::binary | ios::in | ios::out);
         if(!d_file.is_open()){
@@ -510,9 +515,9 @@ void testrangeSearch(ISAMFile<int> &isam){
 
 int main(){
     ISAMFile<int> isam("data.dat", "indice1.dat");
-    test1(isam);
+    //test1(isam);
     //ingresando un valor
-    Registro regis = {"The Witcher", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."};
+    Registro regis = {"The Witcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."};
     isam.add(regis);
     isam.print();
     //probando el search
