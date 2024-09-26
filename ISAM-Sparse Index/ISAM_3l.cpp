@@ -23,7 +23,7 @@ const int Data_size = 23; //es el numero de registros que puede tener una pagina
     // 8192/354 = 23.16 o aprox 23 , 23 registros por pagina
 
 struct Registro {
-    char Tittle[30];        
+    char Tittle[40];     //30 a 40   
     char ReleaseYear[12];
     char Runtime[7];
     char Genre[25];
@@ -220,25 +220,25 @@ class ISAMFile{
         firstLetter = tolower(firstLetter);
         // Convertir la primera letra en una clave numérica.
         if (firstLetter >= 'a' && firstLetter <= 'c') {
-            return 200;
+            return 100;
         } else if (firstLetter >= 'd' && firstLetter <= 'f') {
-            return 400;
+            return 200;
         } else if (firstLetter >= 'g' && firstLetter <= 'i') {
-            return 600;
+            return 300;
         } else if (firstLetter >= 'j' && firstLetter <= 'l') {
-            return 800;
+            return 400;
         } else if (firstLetter >= 'm' && firstLetter <= 'o') {
-            return 1000;
+            return 500;
         } else if (firstLetter >= 'p' && firstLetter <= 'r') {
-            return 1200;
+            return 600;
         } else if (firstLetter >= 's' && firstLetter <= 'u') {
-            return 1400;
+            return 700;
         } else if (firstLetter >= 'v' && firstLetter <= 'x') {
-            return 1600;
+            return 800;
         } else if (firstLetter >= 'y' && firstLetter <= 'z') {
-            return 1800;
+            return 900;
         } else {
-            return 2000;}
+            return 1000;}
     }
     int FirstLetterToKey2(char firstLetter) {
         // Normalización de mayúsculas a minúsculas.
@@ -331,7 +331,7 @@ class ISAMFile{
                 // reescribir la página de datos
                 d_file.seekp(nivelador * sizeof(PageData), ios::beg);
                 d_file.write((char*)&data, sizeof(PageData));
-                //cout << "Se agregó el registro: " << registro.Tittle << endl;
+                cout << "Se agregó el registro: " << registro.Tittle << endl;
                 d_file.close();
                 return true;
             } else if (data.count == Data_size && data.nextPage != -1) {
@@ -573,7 +573,7 @@ class ISAMFile{
                     // reescribir la página de datos
                     d_file.seekp(nivelador * sizeof(PageData), ios::beg);
                     d_file.write((char*)&data, sizeof(PageData));
-                    cout << "Se eliminó el registro: " << key << endl;
+                    cout << "Se elimino el registro: " << key << endl;
                     d_file.close();
                     return true;
                 }
@@ -592,7 +592,7 @@ class ISAMFile{
 
 
     }
-    void print() { 
+    void print(int limite){
         ifstream d_file(data_file, ios::binary | ios::in);
         if (!d_file.is_open()) {
             cout << "Error al abrir el archivo de datos" << endl;
@@ -604,7 +604,7 @@ class ISAMFile{
         streampos lastPosition;  // Guardar la última posición después de leer la página principal
 
         // Leer cada página en el archivo
-        while (d_file.read((char*)&data, sizeof(PageData))) {
+        while (d_file.read((char*)&data, sizeof(PageData)) && pageCounter < limite) {
             cout << "------------------------------------" << endl;
             cout << "Página: " << pageCounter << endl;  // Indicar el número de página actual
 
@@ -717,94 +717,58 @@ class ISAMFile{
         // Leer cada página en el archivo
         while (d_file.read((char*)&data, sizeof(PageData))) {
             contador += data.count;
-            // Guardar la posición después de leer la página principal
-            lastPosition = d_file.tellg();
-
-            // Si hay una página enlazada (overflow), seguir imprimiendo esa página
-            int nextPage = data.nextPage;
-            while (nextPage != -1) {
-                // Posicionar el puntero en la página enlazada (overflow)
-                d_file.seekg(nextPage * sizeof(PageData), ios::beg);
-                d_file.read((char*)&data, sizeof(PageData));
-                contador += data.count;
-                // Ir a la siguiente página enlazada si existe
-                nextPage = data.nextPage;
-            }
-
-            // Regresar a la posición original en el archivo para seguir leyendo las páginas principales
-            d_file.seekg(lastPosition);
-
-            pageCounter++;
         }
 
         d_file.close();
+        cout <<"----------------------------------------------" <<endl;
         cout << "Cantidad de registros: " << contador << endl;
     }
 };
 
-void test1(ISAMFile <int> &isam){
-        Registro reg[4] = {
-        {"the ednesday", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
-        {"The Mandalorian", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic."},
-        {"Melicual1", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
-        {"Melicual2", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic."},
-            
-    };
-    Registro reg2[4] = {// mas registro , no repitas registros
-        {"The Witwwqacher", "2019– ", "60 min", "Action, Adventure, Drama", "8.2", "Henry Cavill, Freya Allan, Anya Chalotra, Mimi Ndiweni", "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts."},
-        {"The dsad", "2019– ", "40 min", "Action, Adventure", "8.8", "Pedro Pascal, Carl Weathers, Gina Carano, Giancarlo Esposito", "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic"},
-    };
-    Registro regis = {"Star Wars: The Clone Wars", "2008–2020", "23 min", "AdventFi", "8.2", "Tom Kane, Matt Lanter, Dee Bradley Baker, James Arnold Taylor", "Jedi Knights lead the Grand Army of the Republic against the droid army of the Separatists."};
-
-    for(int i = 0; i < 4; i++){
-        isam.add(reg[i]);
-    }
-    for(int i = 0; i < 4; i++){
-        isam.add(reg2[i]);
-    }
-    //volver a instar un registro
-    isam.add(regis);
-}
 void test2(ISAMFile <int> &isam){
-        Registro reg[8] = {
+        Registro reg[12] = {
+            {"1899", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
+            {"Stranger things", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
+            {"true detective", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
+            {"9-1-1", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
             {"The aaacher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
-            {"The aaztcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
-            {"The azacher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
-            {"The azzcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
+            {"aaacher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
+            {"The aazcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
+            {"The azacher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},            
             {"The zzzcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
             {"The zzacher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
             {"The zazcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
             {"The zaacher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."},
             
     };
-    for(int i = 0; i < 8; i++){
+    for(int i = 0; i < 12; i++){
         isam.add(reg[i]);
     }
 }
 void test_search(ISAMFile<int> &isam){
-    Registro reg = isam.search("The aitcher");
+    Registro reg = isam.search("Alice in Borderland");
     cout <<"Se encontro el registro: " <<reg.Tittle << endl;
-    Registro reg2 = isam.search("The aaacher");
+    Registro reg2 = isam.search("His Dark Materials");
     cout <<"Se encontro el registro: " <<reg2.Tittle << endl;
-    Registro reg3 = isam.search("The aaztcher");
+    Registro reg3 = isam.search("Breaking Bad");
     cout <<"Se encontro el registro: " <<reg3.Tittle << endl;
-    Registro reg4 = isam.search("The azacher");
+    Registro reg4 = isam.search("Stranger Things");
     cout <<"Se encontro el registro: " <<reg4.Tittle << endl;
-    Registro reg5 = isam.search("The azzcher");
+    Registro reg5 = isam.search("House of the Dragon");
     cout <<"Se encontro el registro: " <<reg5.Tittle << endl;
-    Registro reg6 = isam.search("The zzzcher");
+    Registro reg6 = isam.search("The Crown");
     cout <<"Se encontro el registro: " <<reg6.Tittle << endl;
-    Registro reg7 = isam.search("The zzacher");
+    Registro reg7 = isam.search("Criminal Minds");
     cout <<"Se encontro el registro: " <<reg7.Tittle << endl;
-    Registro reg8 = isam.search("The zazcher");
+    Registro reg8 = isam.search("Better Call Saul");
     cout <<"Se encontro el registro: " <<reg8.Tittle << endl;
 }
 void testrangeSearch(ISAMFile<int> &isam){
-    vector<Registro> result = isam.rangeSearch("The aitcher", "The zzzcher");
-    cout << "Registros encontrados: " << result.size() << endl;
+    vector<Registro> result = isam.rangeSearch("Alice in Borderland", "Stranger Things");
     for(int i = 0; i < result.size(); i++){
         cout << "Titulo: " << result[i].Tittle << endl;
     }
+    cout << "Registros encontrados: " << result.size() << endl;
 }
 
 void CargarDatos(ISAMFile<int> &isam, string ArchivoCSV, int limiteRegistro){
@@ -844,6 +808,7 @@ void CargarDatos(ISAMFile<int> &isam, string ArchivoCSV, int limiteRegistro){
 
         contador++;
         if(contador == limiteRegistro){
+            cout << "Se han cargado " << contador << " registros" << endl;
             break;
         }
     }
@@ -852,37 +817,17 @@ void CargarDatos(ISAMFile<int> &isam, string ArchivoCSV, int limiteRegistro){
 
 int main(){
     ISAMFile<int> isam("data.dat", "indice1.dat" , "indice2.dat", "indice3.dat");
-    //test1(isam);
     //test2(isam);
-    Registro regis = {"The aitcher", "2019– ", "60 min", "Action", "8.2", "Henry Cavill", "Geralt of Rsts."};
-    //isam.add(regis);
     //isam.printEstructura();
     ///////////////////////////////cargar datos
-    CargarDatos(isam, "TVSeries.csv", 50000);
+    //CargarDatos(isam, "TVSeries.csv", 50000);
     ///////////////////////////////probando el search
-    //test_search(isam);
+    test_search(isam);
     ///////////////////////////////todos los registros
-    //isam.CantAllRegistros();
+    isam.CantAllRegistros();
     ///////////////////////////////probando el rangeSearch
-    //testrangeSearch(isam);
-    isam.print();
+    testrangeSearch(isam);
+    //isam.print(10);
     return 0 ;     
 }
 
-
-/*
-// Todo esto depende de la cantidad de registros que se tengan en el archivo de datos (falta encontrar un .csv con mas registros)
-    //suponiendo que se tienen 10 000 registros
-ideas para 3 niveles:
-    -Tamaño de página: 8192 bytes.
-    -Page_size: 1023 (claves por página de índice).
-    -Data_size: 15 (registros por página de datos).
-Paginas: 
-    - 15 registros por página de datos.
-Nivel3: 
-    - PageIndex: 1023 claves, 1024 páginas.
-nivel2:
-    - PageIndex: 31 claves, 32 páginas.
-nivel1:
-    - PageIndex: 31 claves, 32 páginas.
-*/
