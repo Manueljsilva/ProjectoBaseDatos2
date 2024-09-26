@@ -144,8 +144,7 @@ public:
       string binary = bitset<32>(i).to_string(); // convierto a binario de 32 bits
       binary = binary.substr(32 - bitWidth);     // solo los bits relevantes
 
-      cout << "Indice " << i << " (" << binary << ") (profundidad local: "
-           << directory[i]->localDepth << "): ";
+      cout << "Indice " << i << " (" << binary << ") (profundidad local: " << directory[i]->localDepth << "): ";
 
       if (directory[i]->items.empty()) {
         cout << "Vacio";
