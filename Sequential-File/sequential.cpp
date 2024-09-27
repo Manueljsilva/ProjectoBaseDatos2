@@ -606,9 +606,12 @@ bool SequentialFile<PK>::removeKey(PK key) {
         }
         else if (prevReg.nextEspacioType == 'a'){
             // el registro puede existir en un espacio auxiliar
-            int aux = posPrev; // para guardar la posicion anterior
+            int aux = posPrev, aux2 = prevReg.posNext + N; // para guardar la posicion anterior
+            cout << "aux inicial: " << aux << endl;
+            cout << "aux2 inicial: " << aux2 << endl;
             file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * (prevReg.posNext + N), ios::beg);
             file.read(reinterpret_cast<char*>(&prevReg), sizeof(Registro));
+            mostrarRegistro(prevReg);
             pk1 = getPrimaryKeyFromRegistro(prevReg, nameKey);
             while(pk1 != key){
                 if (prevReg.nextEspacioType == 'd') {
@@ -617,14 +620,21 @@ bool SequentialFile<PK>::removeKey(PK key) {
                     return false;
                 }
                 // lo busco en todos sus enlazados
-                aux = prevReg.posNext + N;
-                file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * aux, ios::beg);
+                aux = aux2;
+                cout << "aux: " << aux << endl;
+                aux2 = prevReg.posNext + N;
+                cout << "aux2: " << aux2 << endl;
+                file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * aux2, ios::beg);
                 file.read(reinterpret_cast<char*>(&prevReg), sizeof(Registro));
+                mostrarRegistro(prevReg);
                 pk1 = getPrimaryKeyFromRegistro(prevReg, nameKey);
             }
             // devuelvo al prevReg a su anterior
             file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * aux, ios::beg);
             file.read(reinterpret_cast<char*>(&prevReg), sizeof(Registro));
+            cout << "Registro previo en auxiliares" << endl;
+            mostrarRegistro(prevReg);
+            posPrev = aux;
         }
     } else {
         // si lo encontro en la parte ordenada, busco su anterior
@@ -703,10 +713,13 @@ bool SequentialFile<PK>::removeKey(PK key) {
         }
     } else {
         // Actualizar el puntero del registro anterior (prevReg) para saltar el registro eliminado
+        cout << "registros antes de acutalizar " << endl;
+        mostrarRegistro(prevReg);
+        mostrarRegistro(reg);
         prevReg.posNext = reg.posNext;
         prevReg.nextEspacioType = reg.nextEspacioType;
         mostrarRegistro(prevReg);
-        cout << "Posicion de escritura: " << posCurrent << endl;
+        cout << "Posicion de escritura: " << posPrev << endl;
         file.seekp(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * posPrev, ios::beg);
         file.write(reinterpret_cast<char*>(&prevReg), sizeof(Registro));
     }
@@ -763,39 +776,42 @@ int main ()
 {
     SequentialFile<string> seqFile("registros.dat", "codigo");
 
-    // Registro reg1 = {"0001", "Analiz", "Perez", 5, -1, 'd'};
-    // Registro reg2 = {"0003", "Ana", "Gomez", 3, -1, 'd'};
-    // Registro reg3 = {"0010", "Carlos", "Mendez", 2, -1, 'd'};
-    // Registro reg4 = {"0006", "Mario", "Zapata", 8, -1, 'd'};
-    // Registro reg5 = {"0007", "Elsa", "Vargas", 8, -1, 'd'};
+    Registro reg1 = {"0001", "Analiz", "Perez", 5, -1, 'd'};
+    Registro reg2 = {"0003", "Ana", "Gomez", 3, -1, 'd'};
+    Registro reg3 = {"0010", "Carlos", "Mendez", 2, -1, 'd'};
+    Registro reg4 = {"0006", "Mario", "Zapata", 8, -1, 'd'};
+    Registro reg5 = {"0007", "Elsa", "Vargas", 8, -1, 'd'};
 
-    // Registro reg6 = {"0015", "Paola", "Vargas", 8, -1, 'd'};
-    // Registro reg7 = {"0004", "Diana", "Vargas", 8, -1, 'd'};
-    // Registro reg8 = {"0005", "David", "Vargas", 8, -1, 'd'};
+    Registro reg6 = {"0015", "Paola", "Vargas", 8, -1, 'd'};
+    Registro reg7 = {"0004", "Diana", "Vargas", 8, -1, 'd'};
+    Registro reg8 = {"0005", "David", "Vargas", 8, -1, 'd'};
 
-    // Registro reg9 = {"0020", "Mishelle", "Vargas", 8, -1, 'd'};
-    // Registro reg10 = {"0030", "Joaquin", "Vargas", 8, -1, 'd'};
-    // Registro reg11 = {"0017", "Kevin", "Vargas", 8, -1, 'd'};
+    Registro reg9 = {"0020", "Mishelle", "Vargas", 8, -1, 'd'};
+    Registro reg10 = {"0030", "Joaquin", "Vargas", 8, -1, 'd'};
+    Registro reg11 = {"0017", "Kevin", "Vargas", 8, -1, 'd'};
+    Registro reg12 = {"0019", "Jhosley", "Vargas", 8, -1, 'd'};
 
-    // // test de add
-    // seqFile.add(reg1);
-    // seqFile.add(reg2);
-    // seqFile.add(reg3);
-    // seqFile.add(reg4);
-    // seqFile.displayRecords();
-    // seqFile.add(reg5);
-    // seqFile.displayRecords();
-    // seqFile.add(reg6);
-    // seqFile.displayRecords();
-    // seqFile.add(reg7);
-    // seqFile.displayRecords();
-    // seqFile.add(reg8);
-    // seqFile.displayRecords();
-    // seqFile.add(reg9);
-    // seqFile.displayRecords();
-    // seqFile.add(reg10);
-    // seqFile.displayRecords();
-    // seqFile.add(reg11);
+    // test de add
+    seqFile.add(reg1);
+    seqFile.add(reg2);
+    seqFile.add(reg3);
+    seqFile.add(reg4);
+    seqFile.displayRecords();
+    seqFile.add(reg5);
+    seqFile.displayRecords();
+    seqFile.add(reg6);
+    seqFile.displayRecords();
+    seqFile.add(reg7);
+    seqFile.displayRecords();
+    seqFile.add(reg8);
+    seqFile.displayRecords();
+    seqFile.add(reg9);
+    seqFile.displayRecords();
+    seqFile.add(reg10);
+    seqFile.displayRecords();
+    seqFile.add(reg11);
+    seqFile.displayRecords();
+    seqFile.add(reg12);
     seqFile.displayRecords();
 
     // tests de busqueda
@@ -811,7 +827,7 @@ int main ()
 
     // test de eliminacion
     cout << "\nTest de remove\n";
-    bool resultadoRemove = seqFile.removeKey("0017");
+    bool resultadoRemove = seqFile.removeKey("0019");
     if (resultadoRemove == false){
         cout << "Key no encontrada para el remove" << endl;
     }
