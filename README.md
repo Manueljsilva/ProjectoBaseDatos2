@@ -7,7 +7,7 @@
 
 
 ## Dominio de datos
-Dentro del proyecto, trabajaremos con los siguientes 2 datasets definidos para la carga de archivos .csv:
+Dentro del proyecto, trabajaremos con el siguiente dataset definido para la carga de archivos .csv:
 ### TVSeries
 
 
