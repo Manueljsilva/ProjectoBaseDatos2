@@ -275,7 +275,7 @@ int SequentialFile<PK>::minRegistroRemove(PK key) {
 template <typename PK>
 SequentialFile<PK>::SequentialFile(string _fileData, string nameKey) : nameKey(nameKey){
     // guardamos el nombre como un formato
-    this->fileData = "seqFile_" + _fileData;
+    this->fileData = "seqFile_" + _fileData + "_" + nameKey;
 
     // si no existe el archivo, se crea, pues se toma como vacio
     ifstream file(fileData, ios::binary);
@@ -854,13 +854,13 @@ auto medirTiempo(Func f) {
     chrono::duration<double, milli> duracion = end - start;
     return duracion.count();
 }
-
+/*
 int main () 
 {
     SequentialFile<string> seqFile("registros.dat", "title");
 
     // cambiar el path
-    vector<Registro> registros = readCSV("TV Series_modificado.csv", 50000);
+    vector<Registro> registros = readCSV("TV Series_modificado.csv", 25000);
 
     // --- Medir tiempo de inserción ---
     cout << "\nMedición de tiempos de inserción:\n";
@@ -903,3 +903,4 @@ int main ()
 
     return 0;
 }
+*/
