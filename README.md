@@ -6,14 +6,6 @@
 - Anderson Carcamo Vargas
 - Alexis Raza Estrada
 
-### ISAM-Sparse Index
-
-- 50k = 18.8515s
-- 25k = 7.55716s
-- 10k = 2.50212s
-- 5 k = 1.01528s
-- 1 k = 0.19148s
-
 ## Introducción
 
 El proyecto **BD2_Proyecto1** tiene como objetivo desarrollar un sistema de gestión de bases de datos que implemente técnicas de indexación eficientes para el almacenamiento y recuperación de datos.
@@ -429,7 +421,6 @@ PK getPrimaryKeyFromRegistro(Registro& reg, string nameKey) {
 
 ## ISAM con Índice Disperso
 
-![Isam](.png) \
 
 Se realizo la técnica de indexación ISAM (Indexed Sequential Access Method) en donde se pudo implementar las operaciones de búsqueda, inserción y eliminación en grandes volúmenes de datos.
 
@@ -488,6 +479,12 @@ probando la coneccion con python:
 cd ISAM-SparseIndex/python
 python main.py
 ```
+### tabla de Tiempos de insercion
+
+| **N**                    | **1K**                     | **5K**                      | **10K**                     | **25K**                   | **50K**                     |
+| ------------------------ | -------------------------- | --------------------------- | --------------------------- | ------------------------- | --------------------------- |
+| insert(N registros)      | 0.19148 s                 | 1.01528 s                  | 2.50212 s                  | 7.55716 s                | 8.8515 s                   |
+
 
 ## Extendible Hashing
 
