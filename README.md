@@ -412,12 +412,12 @@ PK getPrimaryKeyFromRegistro(Registro& reg, string nameKey) {
 
 | N | 1k | 5k | 10k | 25k |
 
-| **N**      | **1K**  | **5K** | **10K** | **25K** | 
-|------------|---------|--------|---------|---------|
-|   insert(k registros) | | | | 81997 ms |
-|   search(1 registro) | | | | 0.152669 ms |
-|   rangeSearch(R registros) | | | | 35.8132 ms (8484 registros) |
-|   removeKey(1 registros) | | | | 0.103327 ms |
+| **N**      | **1K**  | **5K** | **10K** | **25K** | **50K** |
+|------------|---------|--------|---------|---------|---------|
+|   insert(N registros) | 262.157 ms | 3800.75 ms | 3518.45 ms | 78941.2 ms | 297351 ms |
+|   search(1 registro) | 0.044204 ms | 0.037797 ms | 0.043386 ms | 0.078036 ms | 0.045971 ms |
+|   rangeSearch(R registros) | 1.40291 ms (415 registros) | 6.69814 ms (2250 registros) | 24.9292 ms (8640 registros) | 27.13 ms (8484 registros) | 37.0832 ms (14984registros) |
+|   removeKey(1 registros) | 0.076774 ms| 0.069757 ms | 0.080299 ms | 0.100157 ms | 0.121785 ms|
 
 
 ## ISAM con Índice Disperso

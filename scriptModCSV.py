@@ -4,8 +4,8 @@ import string
 
 # Función para generar una palabra o número aleatorio
 def generar_sufijo_aleatorio():
-    # Genera un sufijo alfanumérico de 4 caracteres
-    sufijo = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
+    # Genera un sufijo alfanumérico de 10 caracteres
+    sufijo = ''.join(random.choices(string.ascii_letters + string.digits, k=25))
     return sufijo
 
 # Cargar el archivo CSV
