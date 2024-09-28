@@ -6,8 +6,6 @@
 - Anderson Carcamo Vargas
 - Alexis Raza Estrada
 
-## Tiempo
-
 ### ISAM-Sparse Index
 
 - 50k = 18.8515s
@@ -34,15 +32,15 @@ Dentro del proyecto, trabajaremos con el siguiente dataset definido para la carg
 
 #### Descripción de las variables (7 en total)
 
-| **Columna** | **Descripción** |
-| ----------- | --------------- |
-| \*\* \*\*   |                 |
-| \*\* \*\*   |                 |
-| \*\* \*\*   |                 |
-| \*\* \*\*   |                 |
-| \*\* \*\*   |                 |
-| \*\* \*\*   |                 |
-| \*\* \*\*   |                 |
+| **Columna**        | **Descripción**                                                                 |
+| ------------------ | ------------------------------------------------------------------------------- |
+| **Title**          | Título de la serie o película.                                                  |
+| **Release Year**   | Año de lanzamiento o emisión de la serie/película.                              |
+| **Runtime**        | Duración del episodio o película en minutos.                                    |
+| **Genre**          | Género o géneros de la serie/película (e.g., Drama, Comedia).                   |
+| **Rating**         | Calificación o puntaje asignado a la serie/película (e.g., 8.5).                |
+| **Cast**           | Lista de actores principales o elenco de la serie/película.                     |
+| **Synopsis**       | Sinopsis o resumen de la trama de la serie/película.                            |
 
 _Source:_ link del dataset
 
