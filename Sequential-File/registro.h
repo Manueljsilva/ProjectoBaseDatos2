@@ -162,7 +162,8 @@ string cleanYear(string& yearField) {
 }
 
 // Función para leer y limpiar un campo desde un stream
-void leerCampo(stringstream& ss, string& campo, char delimiter = ',') {
+// antes stringstream
+void leerCampo(istream& ss, string& campo, char delimiter = ',') {
     string field;
     if (delimiter == '"') {
         getline(ss, field, '"'); // Leer hasta la primera comilla
