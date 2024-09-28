@@ -493,8 +493,6 @@ python main.py
 
 ## Extendible Hashing
 
-![extendibleHashing](.png) \
-
 ## Métodos Principales
 
 ### Insert
