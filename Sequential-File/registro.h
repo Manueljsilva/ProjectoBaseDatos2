@@ -174,6 +174,8 @@ void leerCampo(stringstream& ss, string& campo, char delimiter = ',') {
     campo = cleanField(field);
 }
 
+
+
 // Función para copiar strings a arreglos de caracteres de forma segura
 void copiarCampo(char* destino, const string& origen, size_t size) {
     strncpy(destino, origen.c_str(), size - 1);

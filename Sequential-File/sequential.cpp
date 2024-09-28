@@ -860,39 +860,39 @@ int main ()
     SequentialFile<string> seqFile("registros.dat", "title");
 
     // cambiar el path
-    vector<Registro> registros = readCSV("TV Series_modificado.csv", 25000);
+    vector<Registro> registros = readCSV("TV Series_modificado.csv", 50000);
 
     // --- Medir tiempo de inserción ---
-    // cout << "\nMedición de tiempos de inserción:\n";
-    // auto tiempoInsercion = medirTiempo([&]() {
-    //     for (auto reg: registros){
-    //         seqFile.add(reg);  // Inserta todos los registros
-    //     }
-    // });
-    // cout << "Tiempo de inserción para " << registros.size() << " registros: " << tiempoInsercion << " ms\n";
+    cout << "\nMedición de tiempos de inserción:\n";
+    auto tiempoInsercion = medirTiempo([&]() {
+        for (auto reg: registros){
+            seqFile.add(reg);  // Inserta todos los registros
+        }
+    });
+    cout << "Tiempo de inserción para " << registros.size() << " registros: " << tiempoInsercion << " ms\n";
 
     // seqFile.displayRecords();
 
     // --- Medir tiempo de búsqueda ---
-    // cout << "\nTests de Búsqueda\n";
-    // auto tiempoBusqueda = medirTiempo([&]() {
-    //     Registro reg = seqFile.search("1899");
-    //     mostrarRegistro(reg);
-    // });
-    // cout << "Tiempo de búsqueda: " << tiempoBusqueda << " ms\n";
+    cout << "\nTests de Búsqueda\n";
+    auto tiempoBusqueda = medirTiempo([&]() {
+        Registro reg = seqFile.search("1899");
+        mostrarRegistro(reg);
+    });
+    cout << "Tiempo de búsqueda: " << tiempoBusqueda << " ms\n";
     
 
         // --- Medir tiempo de búsqueda por rango ---
-    // int k = 0;
-    // cout << "\nTest de RangeSearch\n";
-    // auto tiempoRangeSearch = medirTiempo([&]() {
-    //     vector<Registro> regs = seqFile.rangeSearch("Britannia", "Partner Track");
+    int k = 0;
+    cout << "\nTest de RangeSearch\n";
+    auto tiempoRangeSearch = medirTiempo([&]() {
+        vector<Registro> regs = seqFile.rangeSearch("Britannia", "Partner Track");
         
-    //     for (auto reg: regs)
-    //         k++;
-    // });
-    // cout << "Tiempo de búsqueda por rango: " << tiempoRangeSearch << " ms\n";
-    // cout << "K registros encontrados : " << k << endl;
+        for (auto reg: regs)
+            k++;
+    });
+    cout << "Tiempo de búsqueda por rango: " << tiempoRangeSearch << " ms\n";
+    cout << "K registros encontrados : " << k << endl;
 
     // --- Medir tiempo de eliminación ---
     cout << "\nTest de delete\n";
@@ -900,24 +900,6 @@ int main ()
         bool result = seqFile.removeKey("Britannia");
     });
     cout << "Tiempo de eliminación: " << tiempoEliminacion << " ms\n";
-
-
-    // // tests de busqueda
-    // cout << "\nTests de Busqueda\n";
-    // Registro reg = seqFile.search("1899");
-    // mostrarRegistro(reg);
-
-    // // tests de rangeSearch
-    // cout << "\nTest de RangeSearch\n";
-    // vector<Registro> regs = seqFile.rangeSearch("Alice", "Game");
-    // for (auto reg: regs)
-    //     mostrarRegistro(reg);
-
-
-    // // test de eliminacion
-    // cout << "\nTest de delete\n";
-    // bool result = seqFile.removeKey("The_Recruit");
-    // seqFile.displayRecords();
 
     return 0;
 }
