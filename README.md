@@ -4,7 +4,7 @@
 
 - Manuel Silva Anampa
 - Anderson Carcamo Vargas
--
+- Alexis Raza Estrada
 
 ## Tiempo
 
