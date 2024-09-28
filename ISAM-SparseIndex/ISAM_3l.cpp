@@ -196,14 +196,13 @@ int ISAMFile::SearchKey(const PageIndex &index, const string &key , int &nivelad
     }
     return -1;
 }
-void ISAMFile::SearchIndex(fstream &i_file, int &currentPage, const string &key, PageIndex &index, int &nivelador , int &posicionLetra) {
+void ISAMFile::SearchIndex(fstream &i_file, const string &key, PageIndex &index, int &nivelador , int &posicionLetra) {
     //cout << "nivelador pero en el search: " << nivelador << endl;
     i_file.seekg(nivelador * sizeof(PageIndex), ios::beg);
     i_file.read((char*)&index, sizeof(PageIndex));
 
     int pageIndex = SearchKey(index, key , nivelador , posicionLetra);
-    //cout << "pageIndex: " << pageIndex << endl;
-    currentPage = index.pages[pageIndex]; // Actualizar la página actual
+
 }
 bool ISAMFile::add(Registro registro) {
     // Paso 0: abrir el archivo de índice de nivel 1
@@ -216,8 +215,7 @@ bool ISAMFile::add(Registro registro) {
     int nivelador = 0; 
     int posicionLetra = 0; 
     // Paso 1: Leer el nivel 1 y buscar el índice adecuado
-    int currentPage = 0; // comenzamos en el nivel 1
-    SearchIndex(i_file, currentPage, registro.Tittle, index, nivelador, posicionLetra);
+    SearchIndex(i_file, registro.Tittle, index, nivelador, posicionLetra);
     i_file.close();
     // Abrir el archivo del índice del nivel 2
     fstream i_file2(index2_file, ios::binary | ios::in | ios::out);
@@ -227,7 +225,7 @@ bool ISAMFile::add(Registro registro) {
     }
     i_file2.seekg(0, ios::end);
     // Paso 2: Leer el nivel 2 y buscar el índice adecuado
-    SearchIndex(i_file2, currentPage, registro.Tittle, index, nivelador, posicionLetra);
+    SearchIndex(i_file2, registro.Tittle, index, nivelador, posicionLetra);
     i_file2.close();
     // Abrir el archivo del índice del nivel 3
     fstream i_file3(index3_file, ios::binary | ios::in | ios::out);
@@ -236,7 +234,7 @@ bool ISAMFile::add(Registro registro) {
         return false;
     }
     // Paso 3: Leer el nivel 3 y buscar el índice adecuado
-    SearchIndex(i_file3, currentPage, registro.Tittle, index, nivelador , posicionLetra);
+    SearchIndex(i_file3 , registro.Tittle, index, nivelador , posicionLetra);
     i_file3.close();
 
     // Paso 4: abrir el archivo de datos
@@ -439,46 +437,44 @@ vector <Registro> ISAMFile::rangeSearch(const string &begin, const string &end){
     return result;
 }
 bool ISAMFile::remove(const string &key){
-    // Paso 0: abrir el archivo de índice de nivel 1
-    fstream i_file(index1_file, ios::binary | ios::in | ios::out);
-    if (!i_file.is_open()) {
-        cout << "Error al abrir el archivo de índice nivel 1" << endl;
-        return false;
-    }
-    PageIndex index;
-    int nivelador = 0; 
-    int posicionLetra = 0; 
-    // Paso 1: Leer el nivel 1 y buscar el índice adecuado
-    int currentPage = 0; // comenzamos en el nivel 1
-    SearchIndex(i_file, currentPage, key, index, nivelador, posicionLetra);
-    i_file.close();
-    // Abrir el archivo del índice del nivel 2
-    fstream i_file2(index2_file, ios::binary | ios::in | ios::out);
-    if (!i_file2.is_open()) {
-        cout << "Error al abrir el archivo de índice nivel 2" << endl;
-        return false;
-    }
-    i_file2.seekg(0, ios::end);
-    // Paso 2: Leer el nivel 2 y buscar el índice adecuado
-    SearchIndex(i_file2, currentPage, key, index, nivelador, posicionLetra);
-    i_file2.close();
-    // Abrir el archivo del índice del nivel 3
-    fstream i_file3(index3_file, ios::binary | ios::in | ios::out);
-    if (!i_file3.is_open()) {
-        cout << "Error al abrir el archivo de índice nivel 3" << endl;
-        return false;
-    }
-    // Paso 3: Leer el nivel 3 y buscar el índice adecuado
-    SearchIndex(i_file3, currentPage, key, index, nivelador , posicionLetra);
-    i_file3.close();
+    // 1. Abrir el archivo de indice de nivel 1
+    fstream i_file1(index1_file, ios::binary | ios::in);
 
-    // Paso 4: abrir el archivo de datos
-    fstream d_file(data_file, ios::binary | ios::in | ios::out);
-    if (!d_file.is_open()) {
-        cout << "Error al abrir el archivo de datos" << endl;
-        return false;
-    }
-    // Leer la página de datos correspondiente desde el nivel 3
+    // 2. Leer la estructura de la página de índices
+    PageIndex index;
+    int nivelador = 0;
+    int posicionLetra = 0;
+    i_file1.seekg(nivelador * sizeof(PageIndex), ios::beg);
+    i_file1.read((char*)&index, sizeof(PageIndex));
+
+    // 3. Buscar la página donde podría estar la llave
+    int pageIndex = SearchKey(index, key , nivelador , posicionLetra);
+    i_file1.close();
+
+    //abrir el archivo de indice de nivel 2
+    fstream i_file2(index2_file, ios::binary | ios::in);
+
+    // 4. Leer la estructura de la página de índices
+    i_file2.seekg(nivelador * sizeof(PageIndex), ios::beg);
+    i_file2.read((char*)&index, sizeof(PageIndex));
+
+    // 5. Buscar la página donde podría estar la llave
+    pageIndex = SearchKey(index, key , nivelador , posicionLetra);
+    i_file2.close();
+
+    //abrir el archivo de indice de nivel 3
+    fstream i_file3(index3_file, ios::binary | ios::in);
+    // 6. Leer la estructura de la página de índices
+    i_file3.seekg(nivelador * sizeof(PageIndex), ios::beg);
+    i_file3.read((char*)&index, sizeof(PageIndex));
+
+    // 7. Buscar la página donde podría estar la llave
+    pageIndex = SearchKey(index, key , nivelador , posicionLetra);
+    i_file3.close();
+    
+    // 8. abrir el archivo de datos
+    fstream d_file(data_file, ios::binary | ios::in);
+    // 9. Leer la página de datos correspondiente
     PageData data;
     d_file.seekg(nivelador * sizeof(PageData), ios::beg);
     d_file.read((char*)&data, sizeof(PageData));
@@ -486,10 +482,8 @@ bool ISAMFile::remove(const string &key){
     while (true) {
         for (int i = 0; i < data.count; i++) {
             if (data.records[i].Tittle == key) {
-                // eliminar el registro en la página de datos
-                for (int j = i; j < data.count - 1; j++) {
-                    data.records[j] = data.records[j + 1];
-                }
+                // reemplazar el ultimo registro con el registro a eliminar
+                data.records[i] = data.records[data.count - 1];
                 data.count--; // disminuir el contador de registros
                 // reescribir la página de datos
                 d_file.seekp(nivelador * sizeof(PageData), ios::beg);
@@ -534,31 +528,6 @@ void ISAMFile::print(int limite){
             cout << "Tittle: " << data.records[i].Tittle << endl;
             cout << "------------------------------------" << endl;
         }
-
-        // Guardar la posición después de leer la página principal
-        lastPosition = d_file.tellg();
-
-        // Si hay una página enlazada (overflow), seguir imprimiendo esa página
-        int nextPage = data.nextPage;
-        while (nextPage != -1) {
-            cout << "Siguiente sub página: " << nextPage << endl;
-            
-            // Posicionar el puntero en la página enlazada (overflow)
-            d_file.seekg(nextPage * sizeof(PageData), ios::beg);
-            d_file.read((char*)&data, sizeof(PageData));
-
-            // Imprimir los registros de la página enlazada
-            for (int i = 0; i < data.count; i++) {
-                cout << "Tittle: " << data.records[i].Tittle << endl;
-                cout << "------------------------------------" << endl;
-            }
-
-            // Ir a la siguiente página enlazada si existe
-            nextPage = data.nextPage;
-        }
-
-        // Regresar a la posición original en el archivo para seguir leyendo las páginas principales
-        d_file.seekg(lastPosition);
 
         pageCounter++;
     }
@@ -644,11 +613,23 @@ void ISAMFile::CantAllRegistros(){
     cout <<"----------------------------------------------" <<endl;
     cout << "Cantidad de registros: " << contador << endl;
 }
-
-
-
 void test_search(ISAMFile &isam){
-
+    Registro reg = isam.search("Alice in Borderland");
+    cout <<"Se encontro el registro: " <<reg.Tittle << endl;
+    Registro reg2 = isam.search("His Dark Materials");
+    cout <<"Se encontro el registro: " <<reg2.Tittle << endl;
+    Registro reg3 = isam.search("Breaking Bad");
+    cout <<"Se encontro el registro: " <<reg3.Tittle << endl;
+    Registro reg4 = isam.search("Stranger Things");
+    cout <<"Se encontro el registro: " <<reg4.Tittle << endl;
+    Registro reg5 = isam.search("House of the Dragon");
+    cout <<"Se encontro el registro: " <<reg5.Tittle << endl;
+    Registro reg6 = isam.search("The Crown");
+    cout <<"Se encontro el registro: " <<reg6.Tittle << endl;
+    Registro reg7 = isam.search("Criminal Minds");
+    cout <<"Se encontro el registro: " <<reg7.Tittle << endl;
+    Registro reg8 = isam.search("Better Call Saul");
+    cout <<"Se encontro el registro: " <<reg8.Tittle << endl;
 }
 void testrangeSearch(ISAMFile &isam){
     vector<Registro> result = isam.rangeSearch("Alice in Borderland", "Stranger Things");

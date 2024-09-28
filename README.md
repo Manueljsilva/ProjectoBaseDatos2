@@ -101,6 +101,20 @@ cd ISAM-SparseIndex
 g++ -o mi_programa main.cpp isam_3l.cpp
 ./mi_programa
 ```
+Requisitos para coneccion con python:
+
+```bash
+cd ISAM-SparseIndex
+pip install -r requirements.txt
+cd python
+python setup.py build_ext --inplace
+```
+probando la coneccion con python:
+
+```bash
+cd ISAM-SparseIndex/python
+python main.py
+```
 
 ## Extendible Hashing
 ![extendibleHashing](.png) \

@@ -74,7 +74,7 @@ class ISAMFile{
     int FirstLetterToKey(char firstLetter);
     int SearchKey(const PageIndex &index, const string &key , int &nivelador ,  int & posicionLetra);
     // Función que busca la página correcta en un índice (recorriendo varios niveles).
-    void SearchIndex(fstream &i_file, int &currentPage, const string &key, PageIndex &index, int &nivelador , int &posicionLetra);
+    void SearchIndex(fstream &i_file, const string &key, PageIndex &index, int &nivelador , int &posicionLetra);
     bool add(Registro registro);
     //La busqueda espesiifica puede retornar mas de un elemento que coincida con la key 
     Registro search(const string &key);
