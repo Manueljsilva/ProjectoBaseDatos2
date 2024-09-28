@@ -4,6 +4,8 @@
 #include <cmath>
 #include <fstream>
 
+#include <chrono>
+
 #include "registro.h"
 using namespace std;
 
@@ -683,8 +685,8 @@ bool SequentialFile<PK>::removeKey(PK key) {
         else if (prevReg.nextEspacioType == 'a'){
             // el registro puede existir en un espacio auxiliar
             int aux = posPrev, aux2 = prevReg.posNext + N; // para guardar la posicion anterior
-            cout << "aux inicial: " << aux << endl;
-            cout << "aux2 inicial: " << aux2 << endl;
+            // cout << "aux inicial: " << aux << endl;
+            // cout << "aux2 inicial: " << aux2 << endl;
             file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * (prevReg.posNext + N), ios::beg);
             file.read(reinterpret_cast<char*>(&prevReg), sizeof(Registro));
             // mostrarRegistro(prevReg);
@@ -697,9 +699,9 @@ bool SequentialFile<PK>::removeKey(PK key) {
                 }
                 // lo busco en todos sus enlazados
                 aux = aux2;
-                cout << "aux: " << aux << endl;
+                // cout << "aux: " << aux << endl;
                 aux2 = prevReg.posNext + N;
-                cout << "aux2: " << aux2 << endl;
+                // cout << "aux2: " << aux2 << endl;
                 file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * aux2, ios::beg);
                 file.read(reinterpret_cast<char*>(&prevReg), sizeof(Registro));
                 // mostrarRegistro(prevReg);
@@ -767,7 +769,7 @@ bool SequentialFile<PK>::removeKey(PK key) {
     // cout << "posPrev: "<< posPrev << endl;
     // Manejo del primer registro
     if (posPrev == 0) {
-        mostrarRegistro(reg);
+        // mostrarRegistro(reg);
         // Si el registro a eliminar es el primero y hay uno auxiliar que lo puede reemplazar
         if (prevReg.nextEspacioType == 'a' && prevReg.posNext != -1) {
             // Cargar el registro auxiliar
@@ -843,97 +845,78 @@ void SequentialFile<PK>::displayRecords() {
     file.close();
 }
 
+
+template <typename Func>
+auto medirTiempo(Func f) {
+    auto start = chrono::high_resolution_clock::now();
+    f();
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duracion = end - start;
+    return duracion.count();
+}
+
 int main () 
 {
     SequentialFile<string> seqFile("registros.dat", "title");
 
     // cambiar el path
-    vector<Registro> registros = readCSV("/home/ambar/Archivos/bd2/ProjectoBaseDatos2/Sequential-File/prueba.csv");
+    vector<Registro> registros = readCSV("TV Series_modificado.csv", 25000);
 
-    int i = 0;
-    for (auto reg: registros){
-        
-        // mostrarRegistro(reg);
-        seqFile.add(reg);
-        // seqFile.displayRecords();
-        // if (i==8) break;
-        // i++;
-    }
-    seqFile.displayRecords();
+    // --- Medir tiempo de inserción ---
+    // cout << "\nMedición de tiempos de inserción:\n";
+    // auto tiempoInsercion = medirTiempo([&]() {
+    //     for (auto reg: registros){
+    //         seqFile.add(reg);  // Inserta todos los registros
+    //     }
+    // });
+    // cout << "Tiempo de inserción para " << registros.size() << " registros: " << tiempoInsercion << " ms\n";
+
+    // seqFile.displayRecords();
+
+    // --- Medir tiempo de búsqueda ---
+    // cout << "\nTests de Búsqueda\n";
+    // auto tiempoBusqueda = medirTiempo([&]() {
+    //     Registro reg = seqFile.search("1899");
+    //     mostrarRegistro(reg);
+    // });
+    // cout << "Tiempo de búsqueda: " << tiempoBusqueda << " ms\n";
     
 
-    // tests de busqueda
-    cout << "\nTests de Busqueda\n";
-    Registro reg = seqFile.search("1899");
-    mostrarRegistro(reg);
+        // --- Medir tiempo de búsqueda por rango ---
+    // int k = 0;
+    // cout << "\nTest de RangeSearch\n";
+    // auto tiempoRangeSearch = medirTiempo([&]() {
+    //     vector<Registro> regs = seqFile.rangeSearch("Britannia", "Partner Track");
+        
+    //     for (auto reg: regs)
+    //         k++;
+    // });
+    // cout << "Tiempo de búsqueda por rango: " << tiempoRangeSearch << " ms\n";
+    // cout << "K registros encontrados : " << k << endl;
 
-    // tests de rangeSearch
-    cout << "\nTest de RangeSearch\n";
-    vector<Registro> regs = seqFile.rangeSearch("Alice", "Game");
-    for (auto reg: regs)
-        mostrarRegistro(reg);
-
-
-    // test de eliminacion
+    // --- Medir tiempo de eliminación ---
     cout << "\nTest de delete\n";
-    bool result = seqFile.removeKey("The_Recruit");
-    seqFile.displayRecords();
+    auto tiempoEliminacion = medirTiempo([&]() {
+        bool result = seqFile.removeKey("Britannia");
+    });
+    cout << "Tiempo de eliminación: " << tiempoEliminacion << " ms\n";
 
-    // Registro reg1 = {"0001", "Analiz", "Perez", 5, -1, 'd'};
-    // Registro reg2 = {"0003", "Ana", "Gomez", 3, -1, 'd'};
-    // Registro reg3 = {"0010", "Carlos", "Mendez", 2, -1, 'd'};
-    // Registro reg4 = {"0006", "Mario", "Zapata", 8, -1, 'd'};
-    // Registro reg5 = {"0007", "Elsa", "Vargas", 8, -1, 'd'};
-
-    // Registro reg6 = {"0015", "Paola", "Vargas", 8, -1, 'd'};
-    // Registro reg7 = {"0004", "Diana", "Vargas", 8, -1, 'd'};
-    // Registro reg8 = {"0005", "David", "Vargas", 8, -1, 'd'};
-
-    // Registro reg9 = {"0020", "Mishelle", "Vargas", 8, -1, 'd'};
-    // Registro reg10 = {"0030", "Joaquin", "Vargas", 8, -1, 'd'};
-    // Registro reg11 = {"0017", "Kevin", "Vargas", 8, -1, 'd'};
-    // Registro reg12 = {"0019", "Jhosley", "Vargas", 8, -1, 'd'};
-
-    // // test de add
-    // seqFile.add(reg1);
-    // seqFile.add(reg2);
-    // seqFile.add(reg3);
-    // seqFile.add(reg4);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg5);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg6);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg7);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg8);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg9);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg10);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg11);
-    // // seqFile.displayRecords();
-    // seqFile.add(reg12);
-    // seqFile.displayRecords();
 
     // // tests de busqueda
     // cout << "\nTests de Busqueda\n";
-    // Registro reg = seqFile.search("0018");
+    // Registro reg = seqFile.search("1899");
     // mostrarRegistro(reg);
 
     // // tests de rangeSearch
     // cout << "\nTest de RangeSearch\n";
-    // vector<Registro> regs = seqFile.rangeSearch("0005", "0018");
+    // vector<Registro> regs = seqFile.rangeSearch("Alice", "Game");
     // for (auto reg: regs)
     //     mostrarRegistro(reg);
 
-    // //test de eliminacion
-    // cout << "\nTest de remove\n";
-    // bool resultadoRemove = seqFile.removeKey("0019");
-    // if (resultadoRemove == false){
-    //     cout << "Key no encontrada para el remove" << endl;
-    // }
+
+    // // test de eliminacion
+    // cout << "\nTest de delete\n";
+    // bool result = seqFile.removeKey("The_Recruit");
     // seqFile.displayRecords();
 
     return 0;
