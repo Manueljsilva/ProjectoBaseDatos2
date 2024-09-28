@@ -4,28 +4,8 @@
 #include <cmath>
 #include <fstream>
 
-// #include "structs.h";
+#include "registro.h"
 using namespace std;
-
-struct Registro
-{
-    // estructura estatica de un registro prueba
-    char codigo[5];
-    char nombre[20];
-    char apellidos[20];
-    int ciclo;
-
-    int posNext; // pos siguiente 0>= : posicion en aux o en dat,
-    char nextEspacioType; // puede ser a: auxiliar o d: datos, e:elimnado
-};
-
-void mostrarRegistro(Registro reg){
-    cout << "Codigo: " << reg.codigo
-        << ", Nombre: " << reg.nombre
-        << ", Apellidos: " << reg.apellidos
-        << ", Ciclo: " << reg.ciclo
-        << ", puntero: " << reg.posNext << reg.nextEspacioType << endl;
-}
 
 template <typename PK>
 class SequentialFile{
@@ -53,23 +33,15 @@ private:
     bool MayorQue(Registro r1, Registro r2, PK nameKey);
 
     PK getPrimaryKeyFromRegistro(Registro& reg, string nameKey) {
-        if (nameKey == "codigo") {
-            return string(reg.codigo);
-        } else if (nameKey == "nombre") {
-            return string(reg.nombre);
-        } else if (nameKey == "apellidos") {
-            return string(reg.apellidos);
-        } else if (nameKey == "ciclo") {
-            if constexpr (std::is_same<PK, int>::value) {
-                return reg.ciclo;
-            } else if constexpr (std::is_same<PK, string>::value) {
-                return to_string(reg.ciclo);
-            }
+        if (nameKey == "title") {
+            return string(reg.title);
+        } else if (nameKey == "releaseYear") {
+            return string(reg.releaseYear);
         }
-        cout << "Error: clave no existe, se ha puesto codigo como clave" << endl;
-        return string(reg.codigo);
+        cout << "Error: clave no existe, se ha puesto title como clave" << endl;
+        return string(reg.title);
     }
-   
+
     int posRegistro(PK key);
 
     int minRegistro(PK key);
@@ -78,6 +50,7 @@ private:
 };
 
 template <typename PK>
+
 void SequentialFile<PK>::reconstruir() {
     ifstream fileIn(fileData, ios::binary);
     if (!fileIn.is_open()) {
@@ -159,7 +132,19 @@ template <typename PK>
 bool SequentialFile<PK>::MayorQue(Registro r1, Registro r2, PK nameKey){
     PK key1 = getPrimaryKeyFromRegistro(r1, this->nameKey);
     PK key2 = getPrimaryKeyFromRegistro(r2, this->nameKey);
-    return key1 > key2;
+    
+    // Si PK es un char[], usar strcmp
+    if constexpr (std::is_same<PK, char*>::value) {
+        int comparison = strcmp(key1, key2);  // strcmp para comparar char[]
+        return comparison > 0;
+    } 
+    // Si PK es std::string
+    else if constexpr (std::is_same<PK, std::string>::value) {
+        return key1 > key2;  // El operador > funcionará con std::string
+    }
+    
+    return false;  // Valor por defecto si no es ninguno de los dos tipos
+
 }
 
 template <typename PK>
@@ -320,6 +305,7 @@ bool SequentialFile<PK>::add(Registro registro){
     file.seekg(0, ios::beg); // puntero de lectura al inicio
     file.read(reinterpret_cast<char*>(&N), sizeof(int));
     file.read(reinterpret_cast<char*>(&nameKey), sizeof(char[20]));
+
     if (N == 0){
         N = 1;
         // indica que su siguiente libre esta al final
@@ -341,10 +327,15 @@ bool SequentialFile<PK>::add(Registro registro){
         // comparo
         
         file.read(reinterpret_cast<char*>(&r1), sizeof(Registro));
+        // cout << "N  == 1 :" << endl;
+        // mostrarRegistro(r1);
+        // mostrarRegistro(registro);
+        
+        // actalizacion de N a 2
         file.seekp(0, ios::beg);
         N = 2;
         file.write(reinterpret_cast<char*>(&N), sizeof(int));
-
+        // cout << "Resultado de comparacion: " << MayorQue(r1, registro, nameKey) << endl;
         if (MayorQue(r1, registro, nameKey)){ 
             // si r1>registro segun el nameKey indicado
             // me muevo a la posicion de r1 en escritura para guardar registro
@@ -373,85 +364,139 @@ bool SequentialFile<PK>::add(Registro registro){
     // N ya es >= 2
     // busco el registro mas cercano al nuevo valor
     PK keyRegistro = getPrimaryKeyFromRegistro(registro, nameKey);
+    // cout << "keYRegistro obtenido: " << keyRegistro << endl;
     int pos = posRegistro(keyRegistro); // siempre es el menor ultimo o a si esta libre, inseta ahi
+
     if (pos == -2){
         cout << "ERROR: REGISTRO YA EXISTE Y HA SIDO OMITIDO"<< endl;
         return false;
     }
+    if (pos == -1) pos = 0;
+    // cout << "Pos obtenido: " << pos << endl;
     file.seekg(sizeof(int) + sizeof(char[20]) + pos*sizeof(Registro), ios::beg);
-    file.read(reinterpret_cast<char*>(&r1), sizeof(Registro));
+    file.read(reinterpret_cast<char*>(&r1), sizeof(Registro));\
+
+    // cout << "regLeido -> " << endl;
+    // mostrarRegistro(r1);
 
     if (r1.nextEspacioType == 'a') {
-        int prevPos = pos; // 1
-        int nextPos = r1.posNext + N; // 3
+        int prePrevPos = -1;
+        int prevPos = pos; // 0
+        int nextPos = r1.posNext + N; // 4
 
         while (r1.nextEspacioType == 'a') {
             if (MayorQue(r1, registro, nameKey)) break;
 
             file.seekg(sizeof(int) + sizeof(char[20]) + nextPos * sizeof(Registro), ios::beg);
             file.read(reinterpret_cast<char*>(&r1), sizeof(Registro));
+
+            // cout << "actualizacion del registro" << endl;
+            // mostrarRegistro(r1);
             
             PK pk1, pk2;
             pk1 = getPrimaryKeyFromRegistro(r1, nameKey);
             pk2 = getPrimaryKeyFromRegistro(registro, nameKey);
+
             if(pk1 == pk2){
                 cout << "ERROR: REGISTRO YA EXISTE Y HA SIDO OMITIDO"<< endl;
                 return false;
             }
-            
-            prevPos = nextPos; // 3
-            nextPos = r1.posNext + N; // 5
-        }
-        // conectamos al puntero del registro anterior
-        // file.seekp(sizeof(int) + sizeof(char[20]) + prevPos * sizeof(Registro), ios::beg);
-        // Registro rPrev;
-        // file.read(reinterpret_cast<char*>(&rPrev), sizeof(Registro));
 
-        // rPrev.posNext = nextPos - N;  // Apunto el anterior al nuevo registro
-        // rPrev.nextEspacioType = 'a'; 
+            prePrevPos = prevPos;
+            prevPos = nextPos; // 5
+            if(r1.nextEspacioType == 'd') nextPos = r1.posNext; // 1
+            else nextPos = r1.posNext + N;
+        }
+
+        // conectamos al puntero del registro anterior
         file.seekp(0, ios::end);
         int newPos = ((file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro)) - N;
         
-        // Escribir el nuevo registro
-        registro.posNext = r1.posNext;
-        registro.nextEspacioType = r1.nextEspacioType;
-        file.write(reinterpret_cast<char*>(&registro), sizeof(Registro));
+        if (prevPos == 0 && MayorQue(r1, registro, nameKey)) {
+            registro.posNext = newPos;
+            registro.nextEspacioType = 'a';
 
-        r1.posNext = newPos;
-        r1.nextEspacioType = 'a';
+            // el r1 mantiene su enlace
+            file.seekp(0, ios::end);
+            file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
 
-        // Escribir el registro previo actualizado
-        file.seekp(sizeof(int) + sizeof(char[20]) + prevPos * sizeof(Registro), ios::beg);
-        file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
+            file.seekp(sizeof(int) + sizeof(char[20]), ios::beg);
+            file.write(reinterpret_cast<char*>(&registro), sizeof(Registro));
+        }
+        else {
+            // Escribir el nuevo registro
+            if (!MayorQue(r1, registro, nameKey)){         
+                registro.posNext = r1.posNext;
+                registro.nextEspacioType = r1.nextEspacioType;
 
+                file.seekp(0, ios::end);
+                file.write(reinterpret_cast<char*>(&registro), sizeof(Registro));
+
+                r1.posNext = newPos;
+                r1.nextEspacioType = 'a';
+
+                // Escribir el registro previo actualizado
+                file.seekp(sizeof(int) + sizeof(char[20]) + prevPos * sizeof(Registro), ios::beg);
+                file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
+            } else {
+                if (prevPos >= N) prevPos = prevPos - N;
+                registro.posNext = prevPos;
+                registro.nextEspacioType = 'a';
+
+                // cout << "registro a escribir en la posicion:" << newPos + N << endl;
+                // mostrarRegistro(registro);
+                file.seekp(0, ios::end);
+                file.write(reinterpret_cast<char*>(&registro), sizeof(Registro));
+
+                file.seekg(sizeof(int) + sizeof(char[20]) + prePrevPos * sizeof(Registro), ios::beg);
+                file.read(reinterpret_cast<char*>(&r1), sizeof(Registro));
+                
+                // cout << "registro a escribir en la posicion:" << prePrevPos << endl;
+                // mostrarRegistro(registro);
+                r1.posNext = newPos;
+                file.seekp(sizeof(int) + sizeof(char[20]) + prePrevPos * sizeof(Registro), ios::beg);
+                file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
+            }
+        }
     }
     else if (r1.nextEspacioType == 'd') {
-        
-        // actualizo el puntero del registro a insertar al siguiente registro en el archivo de datos ordenado
-
-        registro.nextEspacioType = 'd';
-        registro.posNext = r1.posNext;
-        file.seekp(0, ios::end);
-        if (r1.posNext == -1 && (N) == (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro)) {
-            N++;
-            file.seekp(0, ios::beg);
-            file.write(reinterpret_cast<char*>(&N), sizeof(N));
+        if (pos == 0 && MayorQue(r1, registro, nameKey)){
+            // sobreponer el registro en la posicion inicial
             file.seekp(0, ios::end);
-            r1.posNext = (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro);
-            r1.nextEspacioType == 'd';
+            registro.posNext = (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro) - N;
+            registro.nextEspacioType = 'a';
             
-        } else {
-            // actualizo el puntero al next del registro actual
-            file.seekp(0, ios::end);
-            r1.posNext = (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro) - N; // posicion final del archivo
-            r1.nextEspacioType = 'a';
+            file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
+            file.seekp(sizeof(int) + sizeof(char[20]), ios::beg);
+            file.write(reinterpret_cast<char*>(&registro), sizeof(Registro));
         }
-        // aprovecho que estoy al final e inserto el nuevo registro
-        file.seekp(0, ios::end);
-        file.write(reinterpret_cast<char*>(&registro), sizeof(registro));
-        // actualizo el registro anterior
-        file.seekp(sizeof(int) + sizeof(char[20]) + pos*sizeof(Registro), ios::beg);
-        file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
+        else {
+            // actualizo el puntero del registro a insertar al siguiente registro en el archivo de datos ordenado
+            registro.nextEspacioType = 'd';
+            registro.posNext = r1.posNext;
+
+            file.seekp(0, ios::end);
+            if (r1.posNext == -1 && (N) == (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro)) {
+                N++;
+                file.seekp(0, ios::beg);
+                file.write(reinterpret_cast<char*>(&N), sizeof(N));
+                file.seekp(0, ios::end);
+                r1.posNext = (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro);
+                r1.nextEspacioType == 'd';
+                
+            } else {
+                // actualizo el puntero al next del registro actual
+                file.seekp(0, ios::end);
+                r1.posNext = (file.tellp() - sizeof(int) - sizeof(char[20])) / sizeof(Registro) - N; // posicion final del archivo
+                r1.nextEspacioType = 'a';
+            }
+            // aprovecho que estoy al final e inserto el nuevo registro
+            file.seekp(0, ios::end);
+            file.write(reinterpret_cast<char*>(&registro), sizeof(registro));
+            // actualizo el registro anterior
+            file.seekp(sizeof(int) + sizeof(char[20]) + pos*sizeof(Registro), ios::beg);
+            file.write(reinterpret_cast<char*>(&r1), sizeof(Registro));
+        }
     }
 
     // // no inserta en los e.
@@ -782,14 +827,14 @@ void SequentialFile<PK>::displayRecords() {
         file.read(reinterpret_cast<char*>(&reg), sizeof(Registro));
 
 
-        cout << i << ": " << reg.codigo << ", " << reg.nombre << " puntero = " << reg.posNext << reg.nextEspacioType << endl;
+        cout << i << ": " << reg.title << ", " << reg.releaseYear << " puntero = " << reg.posNext << reg.nextEspacioType << endl;
     }
 
     cout << "Registros en la parte Auxiliar:\n";
     int i = 0;
     file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * (N + i), ios::beg);
     while (file.read(reinterpret_cast<char*>(&reg), sizeof(Registro))) {  // Asumiendo que MAX_AUXILIAR es la cantidad de registros auxiliares
-        cout << "Aux " << i << " : " << reg.codigo << ", " << reg.nombre << " puntero = " << reg.posNext << reg.nextEspacioType << std::endl;
+        cout << "Aux " << i << ": " << reg.title << ", " << reg.releaseYear << " puntero = " << reg.posNext << reg.nextEspacioType << endl;
         i++;
         file.seekg(sizeof(int) + sizeof(char[20]) + sizeof(Registro) * (N + i), ios::beg);
     }
@@ -800,58 +845,85 @@ void SequentialFile<PK>::displayRecords() {
 
 int main () 
 {
-    SequentialFile<string> seqFile("registros.dat", "codigo");
+    SequentialFile<string> seqFile("registros.dat", "title");
 
-    Registro reg1 = {"0001", "Analiz", "Perez", 5, -1, 'd'};
-    Registro reg2 = {"0003", "Ana", "Gomez", 3, -1, 'd'};
-    Registro reg3 = {"0010", "Carlos", "Mendez", 2, -1, 'd'};
-    Registro reg4 = {"0006", "Mario", "Zapata", 8, -1, 'd'};
-    Registro reg5 = {"0007", "Elsa", "Vargas", 8, -1, 'd'};
+    // cambiar el path
+    vector<Registro> registros = readCSV("/home/ambar/Archivos/bd2/ProjectoBaseDatos2/Sequential-File/prueba.csv");
 
-    Registro reg6 = {"0015", "Paola", "Vargas", 8, -1, 'd'};
-    Registro reg7 = {"0004", "Diana", "Vargas", 8, -1, 'd'};
-    Registro reg8 = {"0005", "David", "Vargas", 8, -1, 'd'};
-
-    Registro reg9 = {"0020", "Mishelle", "Vargas", 8, -1, 'd'};
-    Registro reg10 = {"0030", "Joaquin", "Vargas", 8, -1, 'd'};
-    Registro reg11 = {"0017", "Kevin", "Vargas", 8, -1, 'd'};
-    Registro reg12 = {"0019", "Jhosley", "Vargas", 8, -1, 'd'};
-
-    // test de add
-    seqFile.add(reg1);
-    seqFile.add(reg2);
-    seqFile.add(reg3);
-    seqFile.add(reg4);
+    int i = 0;
+    for (auto reg: registros){
+        
+        // mostrarRegistro(reg);
+        seqFile.add(reg);
+        seqFile.displayRecords();
+        // if (i==8) break;
+        // i++;
+    }
     // seqFile.displayRecords();
-    seqFile.add(reg5);
-    // seqFile.displayRecords();
-    seqFile.add(reg6);
-    // seqFile.displayRecords();
-    seqFile.add(reg7);
-    // seqFile.displayRecords();
-    seqFile.add(reg8);
-    // seqFile.displayRecords();
-    seqFile.add(reg9);
-    // seqFile.displayRecords();
-    seqFile.add(reg10);
-    // seqFile.displayRecords();
-    seqFile.add(reg11);
-    // seqFile.displayRecords();
-    seqFile.add(reg12);
-    seqFile.displayRecords();
+    
 
     // tests de busqueda
-    cout << "\nTests de Busqueda\n";
-    Registro reg = seqFile.search("0018");
-    mostrarRegistro(reg);
+    // cout << "\nTests de Busqueda\n";
+    // Registro reg = seqFile.search("1899");
+    // mostrarRegistro(reg);
 
     // tests de rangeSearch
-    cout << "\nTest de RangeSearch\n";
-    vector<Registro> regs = seqFile.rangeSearch("0005", "0018");
-    for (auto reg: regs)
-        mostrarRegistro(reg);
+    // cout << "\nTest de RangeSearch\n";
+    // vector<Registro> regs = seqFile.rangeSearch("0005", "0018");
+    // for (auto reg: regs)
+    //     mostrarRegistro(reg);
 
-    // test de eliminacion
+
+    // Registro reg1 = {"0001", "Analiz", "Perez", 5, -1, 'd'};
+    // Registro reg2 = {"0003", "Ana", "Gomez", 3, -1, 'd'};
+    // Registro reg3 = {"0010", "Carlos", "Mendez", 2, -1, 'd'};
+    // Registro reg4 = {"0006", "Mario", "Zapata", 8, -1, 'd'};
+    // Registro reg5 = {"0007", "Elsa", "Vargas", 8, -1, 'd'};
+
+    // Registro reg6 = {"0015", "Paola", "Vargas", 8, -1, 'd'};
+    // Registro reg7 = {"0004", "Diana", "Vargas", 8, -1, 'd'};
+    // Registro reg8 = {"0005", "David", "Vargas", 8, -1, 'd'};
+
+    // Registro reg9 = {"0020", "Mishelle", "Vargas", 8, -1, 'd'};
+    // Registro reg10 = {"0030", "Joaquin", "Vargas", 8, -1, 'd'};
+    // Registro reg11 = {"0017", "Kevin", "Vargas", 8, -1, 'd'};
+    // Registro reg12 = {"0019", "Jhosley", "Vargas", 8, -1, 'd'};
+
+    // // test de add
+    // seqFile.add(reg1);
+    // seqFile.add(reg2);
+    // seqFile.add(reg3);
+    // seqFile.add(reg4);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg5);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg6);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg7);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg8);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg9);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg10);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg11);
+    // // seqFile.displayRecords();
+    // seqFile.add(reg12);
+    // seqFile.displayRecords();
+
+    // // tests de busqueda
+    // cout << "\nTests de Busqueda\n";
+    // Registro reg = seqFile.search("0018");
+    // mostrarRegistro(reg);
+
+    // // tests de rangeSearch
+    // cout << "\nTest de RangeSearch\n";
+    // vector<Registro> regs = seqFile.rangeSearch("0005", "0018");
+    // for (auto reg: regs)
+    //     mostrarRegistro(reg);
+
+    // //test de eliminacion
     // cout << "\nTest de remove\n";
     // bool resultadoRemove = seqFile.removeKey("0019");
     // if (resultadoRemove == false){
