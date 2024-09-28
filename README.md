@@ -1,19 +1,23 @@
 # BD2_Proyecto1
+
 ## Integrantes:
+
 - Manuel Silva Anampa
 - Anderson Carcamo Vargas
 -
 
 ## Tiempo
+
 ### ISAM-Sparse Index
+
 - 50k = 18.8515s
 - 25k = 7.55716s
 - 10k = 2.50212s
 - 5 k = 1.01528s
 - 1 k = 0.19148s
 
-
 ## Introducción
+
 El proyecto **BD2_Proyecto1** tiene como objetivo desarrollar un sistema de gestión de bases de datos que implemente técnicas de indexación eficientes para el almacenamiento y recuperación de datos.
 
 La importancia de la indexación radica en su capacidad para optimizar el acceso a grandes volúmenes de datos. En este proyecto, utilizaremos un conjunto de datos que contiene información sobre series de televisión, lo que nos permitirá evaluar el impacto de estas técnicas de indexación en el rendimiento del sistema.
@@ -27,44 +31,51 @@ Dentro del proyecto, trabajaremos con el siguiente dataset definido para la carg
 ### TVSeries
 
 ### 500 k
-#### Descripción de las variables (7 en total)
-| **Columna**      | **Descripción**                                       |
-|------------------|-------------------------------------------------------|
-| ** **           |                  |
-| ** **      |                            |
-| ** **         |               |
-| ** **        |                |
-| ** **          |                        |
-| ** **        |                      |
-| ** **         |                              |
 
-*Source:* link del dataset
+#### Descripción de las variables (7 en total)
+
+| **Columna** | **Descripción** |
+| ----------- | --------------- |
+| \*\* \*\*   |                 |
+| \*\* \*\*   |                 |
+| \*\* \*\*   |                 |
+| \*\* \*\*   |                 |
+| \*\* \*\*   |                 |
+| \*\* \*\*   |                 |
+| \*\* \*\*   |                 |
+
+_Source:_ link del dataset
 
 ## Resultados esperados
 
 ## Funciones implementadas
+
 ```c++
 Record search(T key);
 vector <Record> rangeSearch(T begin-key, T end-key);
 void insert(Record registro);
 void remove(T key);
 ```
+
 ## Organización de Archivos
 
 Las estrategias usadas son las siguientes:
-+ Sequential File
-+ ISAM
-+ Extendible Hashing
+
+- Sequential File
+- ISAM
+- Extendible Hashing
 
 ## Sequential File
+
 ![seqFile](.png) \
 
 ### Consideraciones:
 
 Para la implementaciòn se han considerado:
+
 - Registros estáticos de la forma:
 
-``` c++
+```c++
 struct Registro {
     char title[100];         // Título de la serie
     char releaseYear[10];    // Año de lanzamiento
@@ -79,9 +90,9 @@ struct Registro {
 };
 ```
 
-***Se asume que si pasan del registro limitado se acorta el campo.***
+**_Se asume que si pasan del registro limitado se acorta el campo._**
 
-- Archivos guardados con el formato: **seqFile_<nombre_archivo>_<nombre_key>.dat**
+- Archivos guardados con el formato: **seqFile*<nombre_archivo>*<nombre_key>.dat**
 
 - Usa una lista enlazada simple entre registros:
 
@@ -89,7 +100,7 @@ struct Registro {
 Reg1 -> Reg2 -> Reg3 -> ... -> RegN
 ```
 
-- Lìmite de registros ``k:``  $log_2N$
+- Lìmite de registros `k:` $log_2N$
 
 - Puede recibir solo como pk el title por condiciones de la tabla, pero pueden añadirse otras opciones.
 
@@ -97,32 +108,32 @@ Reg1 -> Reg2 -> Reg3 -> ... -> RegN
 
 ### Funciones Implementadas:
 
-| **Funciones**      | **Parametros**  | **Funcionalidad**|
-|------------------|--------------------------------------|-----------------|
-| ``add(Registro registro)``           |  recibe un tipo Registro | añade un registro al SeqFile |
-| ``search(PK key)``      |    recibe una key de tipo PK          |  busca un registro |
-| ``rangeSearch(PK beginKey, PK endKey)``         |     recibe un key entre beginKey y endKey          |  obtiene registros entre las llaves input|
-| ``removeKey(PK key)``        |      recive la llave de busqueda para eliminar      | remueve un registro |
-| ``reconstruir()``         |     -              | reconstuye el archivo usando la lista enlazada |
-| ``getPrimaryKeyFromRegistro(Registro& reg, string nameKey)``      |        recibe el registro y nombre de la llave              |  retorna la llave de nombre nameKey del registro |
-
+| **Funciones**                                              | **Parametros**                            | **Funcionalidad**                               |
+| ---------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------- |
+| `add(Registro registro)`                                   | recibe un tipo Registro                   | añade un registro al SeqFile                    |
+| `search(PK key)`                                           | recibe una key de tipo PK                 | busca un registro                               |
+| `rangeSearch(PK beginKey, PK endKey)`                      | recibe un key entre beginKey y endKey     | obtiene registros entre las llaves input        |
+| `removeKey(PK key)`                                        | recive la llave de busqueda para eliminar | remueve un registro                             |
+| `reconstruir()`                                            | -                                         | reconstuye el archivo usando la lista enlazada  |
+| `getPrimaryKeyFromRegistro(Registro& reg, string nameKey)` | recibe el registro y nombre de la llave   | retorna la llave de nombre nameKey del registro |
 
 #### **Add**
 
 Complejidad estimada: BusquedaBinaria + Busqueda Lineal: $O(log_2N + k)$
 
 - Optmizaciones:
+
   - Para N=1: insercccion al ultimo y actulizacion de N
   - Para N=2: aumento de N y añadido del registro
   - Para N>=3:
 
-    Se obtiene el registro mas cercano al registro que quiero obtener en la parte ordenada. Considera las salidas de ``-2`` y ``-1``. El primero significa que el registro ya existe, el segundo, que el registro anterior es el inicial.
-    
+    Se obtiene el registro mas cercano al registro que quiero obtener en la parte ordenada. Considera las salidas de `-2` y `-1`. El primero significa que el registro ya existe, el segundo, que el registro anterior es el inicial.
+
     Se inserta segun el registro obtenido.
 
 - Pseodocodigo:
 
-``` c++
+```c++
 add(Registro registro):
 
   // lee N y nameKey de la cabecera del registro
@@ -143,7 +154,7 @@ add(Registro registro):
       r1 -> 1d
       registro -> -1d
       // escritura de registros
-  
+
   pos -> posicion cercana
 
   currentReg -> registro en posicion cercana
@@ -154,7 +165,7 @@ add(Registro registro):
     prevPrevPos
     prevPos
     nextPos
-    while currentReg == 'a':      
+    while currentReg == 'a':
       if currentReg.nameKey > registro.nameKey:
         // el registro se debe añadir con los enlazados
         break;
@@ -185,7 +196,7 @@ Comlejidad: $O(log_2N + k)$, k: cantidad de registros auxiliares
 
 - Pseudocodigo:
 
-``` c++
+```c++
 search(PK key):
   N -> cantidad de registros
   nameKey -> nombre de la llave
@@ -198,7 +209,7 @@ search(PK key):
 
     reg -> lectura de registro en posicion mid
 
-    if reg.nextEspacioType == 'e': 
+    if reg.nextEspacioType == 'e':
       low = mid+1
       saltar
 
@@ -210,7 +221,7 @@ search(PK key):
   mid--;
   while(reg.nextEspacioType == 'e'):
     // retroceder
-  
+
   if reg.nextEspacioType == 'a':
     while reg.nextEspacioType != 'd':
       if reg.nameKey == key: return reg
@@ -229,7 +240,7 @@ Complejidad: $O(log_2N + R)$, donde R son los registros entre el rango.
 
 - Pseudocodigo:
 
-``` c++
+```c++
 rangeSearch(PK keyStart, PK keyEnd):
   N -> cantidad de registros
   nameKey -> nombre de key en la bd
@@ -243,7 +254,7 @@ rangeSearch(PK keyStart, PK keyEnd):
   while true:
     if reg.namekey >= keyStart and reg.nameKey <= keyEnd and reg.nexEspacioType != 'e':
       resultad.add(reg)
-    
+
     if reg.nameKey > keyEnd: break
 
     if reg.nextEspacioType == 'a' and reg.posNext != -1:
@@ -267,10 +278,10 @@ Complejidad: $O(log_2N) + C$, C es el tiempo en actualizar sus punteros conectad
 
 - pseudocodigo:
 
-``` c++
+```c++
 removeKey(PK key):
   N -> cantidad de registros
-  
+
   posPrev -> registro previo para eliminar
 
   Registros prevReg, reg
@@ -292,10 +303,10 @@ removeKey(PK key):
         aux = aux2
         aux2 = prevReg.posNext + N
         prevReg -> registro en aux2
-      
+
       prevReg -> registro en aux
       posPrev = aux;
-  else 
+  else
     if posPrev != 0:
         // indica que el registro a encontrar es el registro y tengo que volver atras
     else:
@@ -308,7 +319,7 @@ removeKey(PK key):
       posCurrent = N + prevReg.posNext
     else
       return false
-    
+
     reg -> registro en posCurrent
 
     if reg.nameKey == key: break
@@ -323,8 +334,8 @@ removeKey(PK key):
     // eliminare un registro inicial
     if prevReg.nextEspacioType == 'a' and prevReg.posNext != -1
       // existe un auxliar que lo puede reemplazar
-    
-    else 
+
+    else
       // no existe se sobrepone con el siguiente registro
   else:
     // Actualizo el puntero anterior para saltar el eliminado
@@ -336,7 +347,6 @@ removeKey(PK key):
 
 ```
 
-
 #### **Reconstruir**
 
 Reconstuye usando la lista enlazada. Lee los registros del archivo y los escribe en otro. Luego este toma su lugar. De esta manera se pierden los eliminados por siempre.
@@ -345,7 +355,7 @@ Complejidad: $O(N)$
 
 - pseudocodigo:
 
-``` c++
+```c++
 reconstruir():
   N -> cantidad de registros en la parte ordenada
   nameKey -> nombre de la llave en la bd
@@ -361,14 +371,14 @@ reconstruir():
         // actualizo el reg en cada enlamiento
         registros.add(reg)
       if reg.posNext == -1: break
-    
+
     if reg.posNext == -1: // esta en el final
       registros.add()
-    
+
   // abro archivos
   for reg: registros:
     // escribo en archivos, pues ya esta ordenado
-  
+
   remove(fileData)
   rename(tempfile, fileData)
 
@@ -379,11 +389,11 @@ reconstruir():
 
 Funciona al igual que un diccionario, recibe el nombre de la key que quiero obtener y lo extraigo del registro.
 
-Complejidad: ``O(1)``
+Complejidad: `O(1)`
 
 - codigo:
 
-``` c++
+```c++
 PK getPrimaryKeyFromRegistro(Registro& reg, string nameKey) {
     if (nameKey == "title") {
         return string(reg.title);
@@ -398,7 +408,7 @@ PK getPrimaryKeyFromRegistro(Registro& reg, string nameKey) {
 
 ### Ventajas y Desventajas:
 
-1. ``Reconstruir`` demasiado caro. Las probabiliades de que se llene la parte auxiliar es alta.
+1. `Reconstruir` demasiado caro. Las probabiliades de que se llene la parte auxiliar es alta.
 2. Uso de espacio adicional para puntero
 3. Facil abstraccion de logica
 4. Uso de busqueda lineal
@@ -412,15 +422,15 @@ PK getPrimaryKeyFromRegistro(Registro& reg, string nameKey) {
 
 | N | 1k | 5k | 10k | 25k |
 
-| **N**      | **1K**  | **5K** | **10K** | **25K** | **50K** |
-|------------|---------|--------|---------|---------|---------|
-|   insert(N registros) | 262.157 ms | 3800.75 ms | 3518.45 ms | 78941.2 ms | 297351 ms |
-|   search(1 registro) | 0.044204 ms | 0.037797 ms | 0.043386 ms | 0.078036 ms | 0.045971 ms |
-|   rangeSearch(R registros) | 1.40291 ms (415 registros) | 6.69814 ms (2250 registros) | 24.9292 ms (8640 registros) | 27.13 ms (8484 registros) | 37.0832 ms (14984registros) |
-|   removeKey(1 registros) | 0.076774 ms| 0.069757 ms | 0.080299 ms | 0.100157 ms | 0.121785 ms|
-
+| **N**                    | **1K**                     | **5K**                      | **10K**                     | **25K**                   | **50K**                     |
+| ------------------------ | -------------------------- | --------------------------- | --------------------------- | ------------------------- | --------------------------- |
+| insert(N registros)      | 262.157 ms                 | 3800.75 ms                  | 3518.45 ms                  | 78941.2 ms                | 297351 ms                   |
+| search(1 registro)       | 0.044204 ms                | 0.037797 ms                 | 0.043386 ms                 | 0.078036 ms               | 0.045971 ms                 |
+| rangeSearch(R registros) | 1.40291 ms (415 registros) | 6.69814 ms (2250 registros) | 24.9292 ms (8640 registros) | 27.13 ms (8484 registros) | 37.0832 ms (14984registros) |
+| removeKey(1 registros)   | 0.076774 ms                | 0.069757 ms                 | 0.080299 ms                 | 0.100157 ms               | 0.121785 ms                 |
 
 ## ISAM con Índice Disperso
+
 ![Isam](.png) \
 
 Se realizo la técnica de indexación ISAM (Indexed Sequential Access Method) en donde se pudo implementar las operaciones de búsqueda, inserción y eliminación en grandes volúmenes de datos.
@@ -428,15 +438,16 @@ Se realizo la técnica de indexación ISAM (Indexed Sequential Access Method) en
 #### Funcionamiento de ISAM
 
 El funcionamiento básico de ISAM consiste en:
-1. **Estructura de Páginas**: Los datos se organizan en páginas, donde cada página contiene un número fijo de registros. Para este proyecto, se asumió un tamaño de página de 8192 bytes. 
+
+1. **Estructura de Páginas**: Los datos se organizan en páginas, donde cada página contiene un número fijo de registros. Para este proyecto, se asumió un tamaño de página de 8192 bytes.
+
    - **Cálculos de Tamaño de Página**:
-     - Para el índice:<br> 
-       Page_size * 4 + (Page_size + 1) * 4 + 4 = 8192 <br>
+     - Para el índice:<br>
+       Page_size _ 4 + (Page_size + 1) _ 4 + 4 = 8192 <br>
        Lo que resultó en un tamaño de página de 1023 para el tercer nivel, por ende en el primer nivel se tiene como tamaño de página igual a 10.
      - Para las páginas de datos:<br>
-     Sabiendo que cada registro tiene un tamaño de 354 bytes, se tiene que:<br>
+       Sabiendo que cada registro tiene un tamaño de 354 bytes, se tiene que:<br>
        8192 / 354 ≈ 23 registros por página
-        
 
 2. **Inserción**: Cuando se inserta un nuevo registro, se busca la posición correspondiente en el índice. Si la página de destino está llena, se maneja el overflow creando páginas enlazadas, lo que permite almacenar más datos sin perder la capacidad de búsqueda.
 
@@ -444,15 +455,16 @@ El funcionamiento básico de ISAM consiste en:
 
 4. **Eliminación**: La eliminación de registros se lleva a cabo de manera similar a la inserción; Se hizo uso de la tecnica de mover el ultimo registro de la pagina a la posicion del registro a eliminar y el espacio donde estaba el ultimo registro sera reutilizado para futuras inserciones.
 
-
 #### Avances y Resultados
 
 Hasta el momento, he logrado implementar con éxito:
+
 - **Inserción**: El registro se inserta adecuadamente, y el manejo del overflow mediante páginas enlazadas está funcionando correctamente.
 - **Búsqueda**: Se ha implementado la búsqueda simple y la búsqueda por rangos.
 - **Eliminación**: La eliminación de registros ha sido completada.
 
 Sin embargo, no se ha logrado completar el parser en Python ni la interfaz gráfica. A pesar de esto, se pudo realizar una integración de Python con C++, lo que establece una base sólida para futuras mejoras.
+
 #### Ejecución del Programa
 
 Para compilar y ejecutar el programa, utiliza el siguiente comando:
@@ -462,6 +474,7 @@ cd ISAM-SparseIndex
 g++ -o mi_programa main.cpp isam_3l.cpp
 ./mi_programa
 ```
+
 Requisitos para coneccion con python:
 
 ```bash
@@ -470,6 +483,7 @@ pip install -r requirements.txt
 cd python
 python setup.py build_ext --inplace
 ```
+
 probando la coneccion con python:
 
 ```bash
@@ -478,8 +492,86 @@ python main.py
 ```
 
 ## Extendible Hashing
+
 ![extendibleHashing](.png) \
 
+## Métodos Principales
 
-### Uso
-### 1. Clonar el repositorio
+### Insert
+
+La función `insert` maneja la adición de un nuevo registro a la tabla hash. Su proceso es el siguiente:
+
+1. **Generación del Hash**: Genera un valor hash para la clave del registro utilizando la función `generate_hash`.
+2. **Coincidencia de Índice**: Busca el registro de índice correspondiente al hash usando `match_index_record`.
+3. **Carga del Bucket**: Carga el bucket correspondiente desde el archivo de datos.
+4. **Manejo de Bucket Lleno**:
+   - **Profundidad < Profundidad Máxima**: Si el bucket está lleno y su profundidad local es menor que la máxima, el bucket se divide, aumentando su profundidad local y reasignando los registros entre dos nuevos buckets.
+   - **Profundidad >= Profundidad Máxima**: Si la profundidad local es máxima, maneja el desbordamiento creando páginas adicionales según sea necesario.
+5. **Bucket No Lleno**: Si el bucket no está lleno, se inserta el registro directamente.
+6. **Guardar Cambios**: Los cambios en los buckets y los nuevos buckets se guardan en el archivo.
+
+### Remove
+
+La función `remove` elimina un registro basado en su clave:
+
+1. **Generación del Hash**: Calcula un hash para la clave dada.
+2. **Coincidencia de Índice**: Localiza el registro de índice adecuado.
+3. **Recorrido del Bucket**: Carga y busca el registro en el bucket correspondiente.
+4. **Páginas de Desbordamiento**: Recorre las páginas de desbordamiento y elimina todas las instancias del registro.
+5. **Guardar Cambios**: Guarda los cambios realizados en los buckets.
+
+### Search
+
+La función `search` recupera registros que coinciden con una clave específica:
+
+1. **Generación del Hash**: Genera el hash de la clave proporcionada.
+2. **Coincidencia de Índice**: Encuentra el registro de índice correspondiente.
+3. **Recorrido del Bucket**: Busca el registro dentro del bucket.
+4. **Páginas de Desbordamiento**: Busca en las páginas de desbordamiento para encontrar todos los registros coincidentes.
+5. **Devolver Resultados**: Retorna un vector con todos los registros que coinciden con la clave.
+
+## Manejo de Colisiones
+
+El sistema utiliza un enfoque de buckets con posibilidad de expansión y páginas de desbordamiento. Cuando un bucket alcanza su capacidad máxima, se verifica la profundidad local para decidir si se debe dividir el bucket o gestionar el desbordamiento.
+
+## Técnicas de Hash
+
+- **Función Hash**: Se usa una función estándar de hashing (`std::hash`) aplicada a las claves.
+- **Profundidad Local y Global**: Se mantiene la profundidad local de cada bucket y una profundidad global para gestionar el tamaño de la tabla hash.
+
+## Manejo de Índices y Buckets
+
+- **Índices**: Los registros de índice almacenan el sufijo del hash y la profundidad, permitiendo una rápida ubicación del bucket correspondiente.
+- **Buckets**: Los buckets almacenan los registros y, cuando están llenos, gestionan el desbordamiento o la división según la profundidad.
+- **Páginas de Desbordamiento**: Utilizadas cuando los buckets alcanzan la capacidad máxima y no pueden dividirse más.
+
+## Estructura de Archivos
+
+- `Bucket.hpp`: Define la estructura y las operaciones sobre los buckets.
+- `ExtendibleHash.hpp`: Implementa la lógica de la tabla hash extensible, incluyendo inserción, eliminación y búsqueda.
+- `IndexRecord.hpp`: Define los registros de índice que gestionan la asociación entre hashes y buckets.
+
+## Experimentación
+- Según la cantidad de registros a insertar, la profundidad global y factor de bloque (cantidad de registros máximos por bloque) irá variando para evitar colisiones y no desperdiciar espacio de memoria.
+
+# Análisis de Profundidades Globales y Factores de Bloque
+
+Este documento resume las profundidades globales y los factores de bloque sugeridos para insertar diferentes cantidades de registros en una estructura de hash extensible sin generar desbordamientos.
+
+| Número de Registros | Tamaño de Bloque (B) | Profundidad Global (D) | Capacidad Total | Comentarios |
+|---------------------|----------------------|------------------------|-----------------|-------------|
+| 20 | 10 | 1 | 20 | Balance adecuado entre el número de buckets y el tamaño del bucket. |
+| 100 | 16 | 3 | 128 | Distribución en 8 buckets con capacidad suficiente para evitar desbordamientos. |
+| 1000 | 32 | 5 | 1024 | Buen balance con 32 buckets, fácil de manejar y eficiente en búsquedas. |
+| 10000 | 64 | 8 | 16384 | Capacidad más que suficiente con buen rendimiento y espacio adicional para crecer. |
+| 50000 | 64 | 10 | 65536 | Configuración óptima para manejar 50,000 registros con margen para expansión futura. |
+
+- Realizaremos la comparación de inserción, búsqueda (1 registro) y eliminicación (1 registro) de las siguientes cantidades de registros cargados:
+
+| 20 | 100 | 1k | 10k | 50k |
+
+| **N**                    | **20**                     | **100**                     | **1K**                     | **10k**                   | **50K**                     |
+| ------------------------ | -------------------------- | --------------------------- | ---------------------------| ------------------------- | --------------------------- |
+| insert(N registros)      | 0.1819305 segundos         | 1.58997 segundos            | 13.93945 segundos          | 126.145 segundos          | 645.606 segundos            |
+| search(1 registro)       | 0.00079 segundos           | 0.000915 segundos           | 0.0003 segundos            | 0.000285 segundos         |                             |
+| remove(1 registro)       | 0.000868 segundos          | 0.000531 segundos           | 0.000616 segundos          | 0.000648 segundos         |                             |

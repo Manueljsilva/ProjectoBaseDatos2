@@ -1,71 +1,59 @@
-#ifndef BUCKET_H
-#define BUCKET_H
+#ifndef BUCKET_HPP
+#define BUCKET_HPP
 
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include "CommonTypes.hpp"
 #include "TVSeriesRecord.hpp"
-using namespace std;
 
 template <typename RecordType>
 struct Bucket
 {
-  bucketSize_t bsize;
-  position_t next_bucket;
+  position_t next_bucket; // puntero lógico del sgte bucket (-1 si no hay)
+  depth_t local_depth;    // profundidad local de cada bucket
   std::vector<RecordType> records;
 
-  void load(std::fstream &file, position_t bucket_position, bucketSize_t bucket_size);
-  void save(std::fstream &file, position_t bucket_pos, bucketSize_t bucket_size);
-  void save(std::ofstream &file, bucketSize_t bucket_size);
+  Bucket() : next_bucket(-1), local_depth(1) {}
+
+  void load(std::fstream &file, position_t bucket_position, size_t bucket_size);
+  void save(std::fstream &file, position_t bucket_position, size_t bucket_size);
 };
 
+
 template <typename RecordType>
-void Bucket<RecordType>::load(std::fstream &file, position_t bucket_position, bucketSize_t bucket_size)
+void Bucket<RecordType>::load(std::fstream &file, position_t bucket_position, size_t bucket_size)
 {
   file.seekg(bucket_position, std::ios::beg);
-  file.read(reinterpret_cast<char *>(&bsize), sizeof(bucketSize_t));
   file.read(reinterpret_cast<char *>(&next_bucket), sizeof(position_t));
-  records.clear();
-  for (int i = 0; i < bsize; i++)
+  file.read(reinterpret_cast<char *>(&local_depth), sizeof(depth_t));
+  size_t record_count;
+  file.read(reinterpret_cast<char *>(&record_count), sizeof(size_t));
+  records.resize(record_count);
+  for (size_t i = 0; i < record_count; ++i)
   {
-    RecordType record;
-    record.load(file);
-    records.push_back(record);
+    records[i].load(file);
   }
 }
 
 template <typename RecordType>
-void Bucket<RecordType>::save(std::fstream &file, position_t bucket_pos, bucketSize_t bucket_size)
+void Bucket<RecordType>::save(std::fstream &file, position_t bucket_position, size_t bucket_size)
 {
-  file.seekp(bucket_pos, std::ios::beg);
-  file.write(reinterpret_cast<const char *>(&bsize), sizeof(bucketSize_t));
+  file.seekp(bucket_position, std::ios::beg);
   file.write(reinterpret_cast<const char *>(&next_bucket), sizeof(position_t));
-  RecordType record;
-  for (int i = 0; i < bucket_size; i++)
+  file.write(reinterpret_cast<const char *>(&local_depth), sizeof(depth_t));
+  size_t record_count = records.size();
+  file.write(reinterpret_cast<const char *>(&record_count), sizeof(size_t));
+  for (const auto &record : records)
   {
-    if (i < records.size())
-    {
-      record = records[i];
-    }
     record.save(file);
+  }
+  // se llena el espacio vacío con registros si es necesario
+  RecordType empty_record;
+  for (size_t i = records.size(); i < bucket_size; ++i)
+  {
+    empty_record.save(file);
   }
 }
 
-template <typename RecordType>
-void Bucket<RecordType>::save(std::ofstream &file, bucketSize_t bucket_size)
-{
-  file.write(reinterpret_cast<const char *>(&bsize), sizeof(bucketSize_t));
-  file.write(reinterpret_cast<const char *>(&next_bucket), sizeof(position_t));
-  RecordType record;
-  for (int i = 0; i < bucket_size; i++)
-  {
-    if (i < records.size())
-    {
-      record = records[i];
-    }
-    record.save(file);
-  }
-}
-
-#endif // BUCKET_H
+#endif // BUCKET_HPP

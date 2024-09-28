@@ -33,7 +33,6 @@ struct TVSeriesRecord
     cout << "-----------------------------------" << endl;
   }
 
-  // Load data from a file stream
   void load(std::fstream &file)
   {
     file.read(reinterpret_cast<char *>(title), sizeof(title));
@@ -45,7 +44,6 @@ struct TVSeriesRecord
     file.read(reinterpret_cast<char *>(synopsis), sizeof(synopsis));
   }
 
-  // Save data to a file stream
   void save(std::fstream &file) const
   {
     file.write(reinterpret_cast<const char *>(title), sizeof(title));
@@ -57,7 +55,6 @@ struct TVSeriesRecord
     file.write(reinterpret_cast<const char *>(synopsis), sizeof(synopsis));
   }
 
-  // Save data to an output file stream
   void save(std::ofstream &file) const
   {
     file.write(reinterpret_cast<const char *>(title), sizeof(title));
@@ -69,14 +66,15 @@ struct TVSeriesRecord
     file.write(reinterpret_cast<const char *>(synopsis), sizeof(synopsis));
   }
 
-
-  // Get the key (identifier) for this record, cleaning spaces and null characters
-    string get_key() const {
-        string key = string(title);
-        key.erase(remove_if(key.begin(), key.end(), ::isspace), key.end()); // Remove spaces
-        key.erase(remove(key.begin(), key.end(), NULL), key.end());         // Remove null characters
-        return key;
-    }
+  // key que identifica el registro
+  string get_key() const
+  {
+    string key = string(title);
+    key.erase(remove(key.begin(), key.end(), '\0'), key.end()); // elimino caracteres nulos
+    // convierto a minúsculas
+    std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+    return key;
+  }
 };
 
 string cleanYear(string &yearField)
@@ -145,7 +143,7 @@ void truncateAndCopy(char *destination, const string &source, size_t size)
 }
 
 // Función para leer y procesar un archivo CSV
-vector<TVSeriesRecord> readCSV(const string &filename, int maxRecords = 20)
+vector<TVSeriesRecord> readCSV(const string &filename, int maxRecords = 50000)
 {
   ifstream file(filename);
   string line;
