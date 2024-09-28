@@ -855,24 +855,29 @@ int main ()
         
         // mostrarRegistro(reg);
         seqFile.add(reg);
-        seqFile.displayRecords();
+        // seqFile.displayRecords();
         // if (i==8) break;
         // i++;
     }
-    // seqFile.displayRecords();
+    seqFile.displayRecords();
     
 
     // tests de busqueda
-    // cout << "\nTests de Busqueda\n";
-    // Registro reg = seqFile.search("1899");
-    // mostrarRegistro(reg);
+    cout << "\nTests de Busqueda\n";
+    Registro reg = seqFile.search("1899");
+    mostrarRegistro(reg);
 
     // tests de rangeSearch
-    // cout << "\nTest de RangeSearch\n";
-    // vector<Registro> regs = seqFile.rangeSearch("0005", "0018");
-    // for (auto reg: regs)
-    //     mostrarRegistro(reg);
+    cout << "\nTest de RangeSearch\n";
+    vector<Registro> regs = seqFile.rangeSearch("Alice", "Game");
+    for (auto reg: regs)
+        mostrarRegistro(reg);
 
+
+    // test de eliminacion
+    cout << "\nTest de delete\n";
+    bool result = seqFile.removeKey("The_Recruit");
+    seqFile.displayRecords();
 
     // Registro reg1 = {"0001", "Analiz", "Perez", 5, -1, 'd'};
     // Registro reg2 = {"0003", "Ana", "Gomez", 3, -1, 'd'};
